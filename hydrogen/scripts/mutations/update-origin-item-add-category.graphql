@@ -1,0 +1,20 @@
+mutation UpdateOriginItemDef($id: ID!) {
+  metaobjectDefinitionUpdate(
+    id: $id
+    definition: {
+      fieldDefinitions: [
+        {
+          create: {
+            key: "category"
+            name: "Category"
+            type: "single_line_text_field"
+            description: "Meat category this origin belongs to, e.g. beef, lamb, ostrich, veal, venison"
+          }
+        }
+      ]
+    }
+  ) {
+    metaobjectDefinition { id type }
+    userErrors { field message }
+  }
+}

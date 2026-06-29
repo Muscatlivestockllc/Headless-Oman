@@ -1,0 +1,48 @@
+mutation {
+  # SHOP links
+  beef: metaobjectCreate(metaobject: {
+    type: "mls_footer_link" handle: "fl-all-beef"
+    fields: [{ key: "label", value: "All Beef" }, { key: "url", value: "/collections/all-beef" }]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  lamb: metaobjectCreate(metaobject: {
+    type: "mls_footer_link" handle: "fl-all-lamb"
+    fields: [{ key: "label", value: "All Lamb" }, { key: "url", value: "/collections/all-lamb" }]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  wagyu: metaobjectCreate(metaobject: {
+    type: "mls_footer_link" handle: "fl-wagyu"
+    fields: [{ key: "label", value: "Australian Wagyu" }, { key: "url", value: "/collections/australian-wagyu-beef-mb-4-5" }]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  boxes: metaobjectCreate(metaobject: {
+    type: "mls_footer_link" handle: "fl-meat-boxes"
+    fields: [{ key: "label", value: "Meat Boxes" }, { key: "url", value: "/collections/box-collection" }]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  buildbox: metaobjectCreate(metaobject: {
+    type: "mls_footer_link" handle: "fl-build-box"
+    fields: [{ key: "label", value: "Build Your Box" }, { key: "url", value: "/collections/build-box" }]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  # HELP links
+  track: metaobjectCreate(metaobject: {
+    type: "mls_footer_link" handle: "fl-track-order"
+    fields: [{ key: "label", value: "Track Order" }, { key: "url", value: "/account" }]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  shipping: metaobjectCreate(metaobject: {
+    type: "mls_footer_link" handle: "fl-shipping"
+    fields: [{ key: "label", value: "Shipping & Returns" }, { key: "url", value: "/pages/shipping" }]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  faq: metaobjectCreate(metaobject: {
+    type: "mls_footer_link" handle: "fl-faq"
+    fields: [{ key: "label", value: "FAQ" }, { key: "url", value: "/pages/faq" }]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  contact: metaobjectCreate(metaobject: {
+    type: "mls_footer_link" handle: "fl-contact"
+    fields: [{ key: "label", value: "Contact Us" }, { key: "url", value: "/pages/contact" }]
+  }) { metaobject { id handle } userErrors { field message } }
+}

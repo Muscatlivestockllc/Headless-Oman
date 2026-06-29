@@ -1,0 +1,17 @@
+mutation {
+  metaobjectDefinitionCreate(definition: {
+    name: "Origin Item"
+    type: "mls_origin_item"
+    access: { storefront: PUBLIC_READ }
+    capabilities: { translatable: { enabled: true } }
+    fieldDefinitions: [
+      { name: "Heading", key: "heading", type: "single_line_text_field", required: true }
+      { name: "Code", key: "code", type: "single_line_text_field" }
+      { name: "Link", key: "link", type: "single_line_text_field" }
+      { name: "Image", key: "image", type: "file_reference" }
+    ]
+  }) {
+    metaobjectDefinition { id type }
+    userErrors { field message }
+  }
+}

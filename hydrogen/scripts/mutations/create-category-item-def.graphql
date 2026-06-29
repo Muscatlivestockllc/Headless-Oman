@@ -1,0 +1,16 @@
+mutation {
+  metaobjectDefinitionCreate(definition: {
+    name: "Category Item"
+    type: "mls_category_item"
+    access: { storefront: PUBLIC_READ }
+    capabilities: { translatable: { enabled: true } }
+    fieldDefinitions: [
+      { name: "Heading", key: "heading", type: "single_line_text_field", required: true }
+      { name: "URL", key: "url", type: "url" }
+      { name: "Image", key: "image", type: "file_reference" }
+    ]
+  }) {
+    metaobjectDefinition { id type }
+    userErrors { field message }
+  }
+}

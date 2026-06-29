@@ -1,0 +1,21 @@
+mutation {
+  metaobjectDefinitionCreate(definition: {
+    name: "Value Banner"
+    type: "mls_value_banner"
+    access: { storefront: PUBLIC_READ }
+    capabilities: { translatable: { enabled: true } }
+    fieldDefinitions: [
+      { name: "Eyebrow",       key: "eyebrow",       type: "single_line_text_field" }
+      { name: "Heading",       key: "heading",       type: "single_line_text_field", required: true }
+      { name: "Body",          key: "body",          type: "multi_line_text_field" }
+      { name: "Button 1 Label",key: "btn1_label",    type: "single_line_text_field" }
+      { name: "Button 1 Link", key: "btn1_link",     type: "single_line_text_field" }
+      { name: "Button 2 Label",key: "btn2_label",    type: "single_line_text_field" }
+      { name: "Button 2 Link", key: "btn2_link",     type: "single_line_text_field" }
+      { name: "Image",         key: "image",         type: "file_reference" }
+    ]
+  }) {
+    metaobjectDefinition { id type }
+    userErrors { field message }
+  }
+}

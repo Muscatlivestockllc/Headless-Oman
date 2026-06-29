@@ -1,0 +1,73 @@
+mutation {
+  beef: metaobjectCreate(metaobject: {
+    type: "mls_category_item"
+    handle: "cat-beef"
+    fields: [
+      { key: "heading", value: "Beef" }
+      { key: "link", value: "/collections/all-beef" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  lamb: metaobjectCreate(metaobject: {
+    type: "mls_category_item"
+    handle: "cat-lamb"
+    fields: [
+      { key: "heading", value: "Lamb" }
+      { key: "link", value: "/collections/all-lamb" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  mutton: metaobjectCreate(metaobject: {
+    type: "mls_category_item"
+    handle: "cat-mutton"
+    fields: [
+      { key: "heading", value: "Mutton" }
+      { key: "link", value: "/collections/all-mutton" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  wagyu: metaobjectCreate(metaobject: {
+    type: "mls_category_item"
+    handle: "cat-wagyu"
+    fields: [
+      { key: "heading", value: "Wagyu" }
+      { key: "link", value: "/collections/australian-wagyu-beef-mb-4-5" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  veal: metaobjectCreate(metaobject: {
+    type: "mls_category_item"
+    handle: "cat-veal"
+    fields: [
+      { key: "heading", value: "Veal" }
+      { key: "link", value: "/collections/all" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  ostrich: metaobjectCreate(metaobject: {
+    type: "mls_category_item"
+    handle: "cat-ostrich"
+    fields: [
+      { key: "heading", value: "Ostrich" }
+      { key: "link", value: "/collections/all" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  poultry: metaobjectCreate(metaobject: {
+    type: "mls_category_item"
+    handle: "cat-poultry"
+    fields: [
+      { key: "heading", value: "Poultry" }
+      { key: "link", value: "/collections/all" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  sausages: metaobjectCreate(metaobject: {
+    type: "mls_category_item"
+    handle: "cat-sausages"
+    fields: [
+      { key: "heading", value: "Sausages" }
+      { key: "link", value: "/collections/all" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+}

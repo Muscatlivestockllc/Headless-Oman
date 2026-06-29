@@ -1,0 +1,21 @@
+mutation {
+  metaobjectDefinitionCreate(definition: {
+    name: "Category Section"
+    type: "mls_category_section"
+    access: { storefront: PUBLIC_READ }
+    capabilities: { translatable: { enabled: true } }
+    fieldDefinitions: [
+      { name: "Eyebrow", key: "eyebrow", type: "single_line_text_field" }
+      { name: "Heading", key: "heading", type: "single_line_text_field" }
+      {
+        name: "Items"
+        key: "items"
+        type: "list.metaobject_reference"
+        validations: [{ name: "metaobject_definition_id", value: "gid://shopify/MetaobjectDefinition/18314592325" }]
+      }
+    ]
+  }) {
+    metaobjectDefinition { id type }
+    userErrors { field message }
+  }
+}

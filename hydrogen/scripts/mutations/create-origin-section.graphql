@@ -1,0 +1,14 @@
+mutation {
+  metaobjectCreate(metaobject: {
+    type: "mls_origin_section"
+    handle: "shop-by-origin"
+    fields: [
+      { key: "eyebrow", value: "From the World's Best Farms" }
+      { key: "heading", value: "Shop by Origin" }
+      { key: "items", value: "[\"gid://shopify/Metaobject/276416266309\",\"gid://shopify/Metaobject/276416331845\",\"gid://shopify/Metaobject/276416364613\",\"gid://shopify/Metaobject/276416397381\",\"gid://shopify/Metaobject/276416430149\",\"gid://shopify/Metaobject/276416495685\",\"gid://shopify/Metaobject/276416528453\"]" }
+    ]
+  }) {
+    metaobject { id handle }
+    userErrors { field message }
+  }
+}

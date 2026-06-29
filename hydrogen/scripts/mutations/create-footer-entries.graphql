@@ -1,0 +1,37 @@
+mutation {
+  shopCol: metaobjectCreate(metaobject: {
+    type: "mls_footer_column"
+    handle: "footer-col-shop"
+    fields: [
+      { key: "heading",  value: "Shop" }
+      { key: "position", value: "1" }
+      { key: "links", value: "[\"gid://shopify/Metaobject/276428849221\",\"gid://shopify/Metaobject/276428881989\",\"gid://shopify/Metaobject/276428914757\",\"gid://shopify/Metaobject/276428947525\",\"gid://shopify/Metaobject/276428980293\"]" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  helpCol: metaobjectCreate(metaobject: {
+    type: "mls_footer_column"
+    handle: "footer-col-help"
+    fields: [
+      { key: "heading",  value: "Help" }
+      { key: "position", value: "2" }
+      { key: "links", value: "[\"gid://shopify/Metaobject/276429013061\",\"gid://shopify/Metaobject/276429045829\",\"gid://shopify/Metaobject/276429078597\",\"gid://shopify/Metaobject/276429111365\"]" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  settings: metaobjectCreate(metaobject: {
+    type: "mls_footer_settings"
+    handle: "footer-settings"
+    fields: [
+      { key: "brand_text",      value: "Premium fresh red meat — beef, lamb, mutton & specialty cuts — delivered across the UAE & Oman." }
+      { key: "instagram_url",   value: "https://instagram.com" }
+      { key: "facebook_url",    value: "https://facebook.com" }
+      { key: "contact_heading", value: "Get in Touch" }
+      { key: "address",         value: "Muscat, Oman & Dubai, UAE" }
+      { key: "phone",           value: "+968 0000 0000" }
+      { key: "email",           value: "hello@mls.com" }
+      { key: "copyright",       value: "Muscat Livestock Store. 100% Halal certified." }
+      { key: "bottom_tagline",  value: "Premium butcher cuts · Delivered fresh" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+}

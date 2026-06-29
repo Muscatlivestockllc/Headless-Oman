@@ -1,0 +1,14 @@
+mutation {
+  metaobjectDefinitionCreate(definition: {
+    name: "Collection Section Config"
+    type: "mls_collection_section"
+    access: { storefront: PUBLIC_READ }
+    fieldDefinitions: [
+      { name: "Heading",     key: "heading",     type: "single_line_text_field" }
+      { name: "Sub Heading", key: "sub_heading", type: "single_line_text_field" }
+    ]
+  }) {
+    metaobjectDefinition { id type }
+    userErrors { field message }
+  }
+}

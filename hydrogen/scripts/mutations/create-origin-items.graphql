@@ -1,0 +1,71 @@
+mutation {
+  australia: metaobjectCreate(metaobject: {
+    type: "mls_origin_item"
+    handle: "origin-australia"
+    fields: [
+      { key: "heading", value: "AUS" }
+      { key: "code", value: "AU" }
+      { key: "link", value: "/search?q=australia" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  newzealand: metaobjectCreate(metaobject: {
+    type: "mls_origin_item"
+    handle: "origin-new-zealand"
+    fields: [
+      { key: "heading", value: "NZ" }
+      { key: "code", value: "NZ" }
+      { key: "link", value: "/search?q=new+zealand" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  japan: metaobjectCreate(metaobject: {
+    type: "mls_origin_item"
+    handle: "origin-japan"
+    fields: [
+      { key: "heading", value: "JAPAN" }
+      { key: "code", value: "JP" }
+      { key: "link", value: "/search?q=japan" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  southafrica: metaobjectCreate(metaobject: {
+    type: "mls_origin_item"
+    handle: "origin-south-africa"
+    fields: [
+      { key: "heading", value: "RSA" }
+      { key: "code", value: "ZA" }
+      { key: "link", value: "/search?q=south+africa" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  usa: metaobjectCreate(metaobject: {
+    type: "mls_origin_item"
+    handle: "origin-usa"
+    fields: [
+      { key: "heading", value: "USA" }
+      { key: "code", value: "US" }
+      { key: "link", value: "/search?q=usa" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  pakistan: metaobjectCreate(metaobject: {
+    type: "mls_origin_item"
+    handle: "origin-pakistan"
+    fields: [
+      { key: "heading", value: "PAK" }
+      { key: "code", value: "PK" }
+      { key: "link", value: "/search?q=pakistan" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+
+  grassfed: metaobjectCreate(metaobject: {
+    type: "mls_origin_item"
+    handle: "origin-grass-fed"
+    fields: [
+      { key: "heading", value: "GRASS-FED" }
+      { key: "code", value: "🌱" }
+      { key: "link", value: "/search?q=grass-fed" }
+    ]
+  }) { metaobject { id handle } userErrors { field message } }
+}

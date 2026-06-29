@@ -1,0 +1,14 @@
+mutation {
+  metaobjectCreate(metaobject: {
+    type: "mls_category_section"
+    handle: "shop-by-category"
+    fields: [
+      { key: "eyebrow", value: "Browse the Butcher" }
+      { key: "heading", value: "Shop by Category" }
+      { key: "items", value: "[\"gid://shopify/Metaobject/276365312069\",\"gid://shopify/Metaobject/276365344837\",\"gid://shopify/Metaobject/276365377605\",\"gid://shopify/Metaobject/276365410373\",\"gid://shopify/Metaobject/276365443141\",\"gid://shopify/Metaobject/276365475909\",\"gid://shopify/Metaobject/276365508677\",\"gid://shopify/Metaobject/276365541445\"]" }
+    ]
+  }) {
+    metaobject { id handle }
+    userErrors { field message }
+  }
+}

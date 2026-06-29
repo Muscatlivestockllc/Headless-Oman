@@ -1,0 +1,18 @@
+mutation {
+  metaobjectCreate(metaobject: {
+    type: "mls_value_banner"
+    handle: "value-boxes-banner"
+    fields: [
+      { key: "eyebrow",    value: "Curated by our butchers" }
+      { key: "heading",    value: "Value Meat Boxes" }
+      { key: "body",       value: "Save more on weekly essentials. Mix beef, lamb, mince and burgers in one curated box — delivered fresh." }
+      { key: "btn1_label", value: "Shop Boxes" }
+      { key: "btn1_link",  value: "/collections/box-collection" }
+      { key: "btn2_label", value: "Build Your Own" }
+      { key: "btn2_link",  value: "/collections/build-box" }
+    ]
+  }) {
+    metaobject { id handle }
+    userErrors { field message }
+  }
+}

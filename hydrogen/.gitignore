@@ -1,0 +1,20 @@
+node_modules
+.cache
+.env
+.env.local
+.shopify/*.json
+!.shopify/project.json
+dist
+build
+/.mf
+.wrangler
+storefrontapi.generated.d.ts
+customer-accountapi.generated.d.ts
+
+# Local debug / one-off admin scripts — not part of the app
+debug_*.js
+setup_*.mjs
+update_*.mjs
+
+# Auto-generated React Router types
+.react-router/

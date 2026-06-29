@@ -1,0 +1,21 @@
+mutation {
+  metaobjectDefinitionCreate(definition: {
+    name: "Footer Column"
+    type: "mls_footer_column"
+    access: { storefront: PUBLIC_READ }
+    capabilities: { translatable: { enabled: true } }
+    fieldDefinitions: [
+      { name: "Heading",  key: "heading",  type: "single_line_text_field", required: true }
+      { name: "Position", key: "position", type: "number_integer" }
+      {
+        name: "Links"
+        key: "links"
+        type: "list.metaobject_reference"
+        validations: [{ name: "metaobject_definition_id", value: "gid://shopify/MetaobjectDefinition/18323275845" }]
+      }
+    ]
+  }) {
+    metaobjectDefinition { id type }
+    userErrors { field message }
+  }
+}

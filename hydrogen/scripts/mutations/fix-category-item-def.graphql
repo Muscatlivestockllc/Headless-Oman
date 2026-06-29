@@ -1,0 +1,14 @@
+mutation {
+  metaobjectDefinitionUpdate(
+    id: "gid://shopify/MetaobjectDefinition/18314592325"
+    definition: {
+      fieldDefinitions: [
+        { delete: { key: "url" } }
+        { create: { name: "Link", key: "link", type: "single_line_text_field" } }
+      ]
+    }
+  ) {
+    metaobjectDefinition { id type fieldDefinitions { key type { name } } }
+    userErrors { field message }
+  }
+}

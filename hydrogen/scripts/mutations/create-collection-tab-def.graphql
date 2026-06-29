@@ -1,0 +1,15 @@
+mutation {
+  metaobjectDefinitionCreate(definition: {
+    name: "Collection Tab"
+    type: "mls_collection_tab"
+    access: { storefront: PUBLIC_READ }
+    fieldDefinitions: [
+      { name: "Label",      key: "label",      type: "single_line_text_field", required: true }
+      { name: "Collection", key: "collection", type: "collection_reference",   required: true }
+      { name: "Position",   key: "position",   type: "number_integer" }
+    ]
+  }) {
+    metaobjectDefinition { id type }
+    userErrors { field message }
+  }
+}

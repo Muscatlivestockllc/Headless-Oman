@@ -1,0 +1,20 @@
+mutation {
+  metaobjectDefinitionUpdate(
+    id: "gid://shopify/MetaobjectDefinition/17336631365"
+    definition: {
+      fieldDefinitions: [
+        {
+          create: {
+            name: "Tabs"
+            key: "tabs"
+            type: "list.metaobject_reference"
+            validations: [{ name: "metaobject_definition_id", value: "gid://shopify/MetaobjectDefinition/18344902725" }]
+          }
+        }
+      ]
+    }
+  ) {
+    metaobjectDefinition { id fieldDefinitions { key type { name } } }
+    userErrors { field message }
+  }
+}

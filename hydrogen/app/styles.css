@@ -1,0 +1,709 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Hide scrollbar cross-browser while keeping scroll functionality */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* LP reviews infinite marquee */
+@keyframes lp-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.lp-marquee-track {
+  animation: lp-marquee 40s linear infinite;
+}
+.lp-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* Announcement bar infinite scroll */
+@keyframes announcement-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-33.333%); }
+}
+.announcement-scroll {
+  animation: announcement-scroll 25s linear infinite;
+}
+
+/* Simple site-wide link hover transition */
+a { transition: color 0.18s ease, opacity 0.18s ease; }
+
+/* Footer nav links — explicit hover gold (CSS fallback for Tailwind inheritance issue) */
+footer .hover\:text-gold:hover { color: var(--color-gold); }
+
+
+/*
+ * Issue 4: Richpanel chat launcher offset on mobile PDP.
+ * The sticky ATC bar is ~64px tall. We push the launcher up only on
+ * screens below md (768px) — the body class `.pdp-page` is added by
+ * ProductPageShell only when the sticky bar is rendered.
+ * This must NOT affect other pages (no .pdp-page = no offset).
+ * Selector targets Richpanel's stable outer container id, not hashed classes.
+ */
+/* Richpanel launcher: always bottom-right, above sticky ATC (z-30), below drawers (z-50) */
+#richpanel-widget,
+#richpanel-container,
+[id^="richpanel"],
+.richpanel-launcher {
+  right: 20px !important;
+  left: auto !important;
+  z-index: 40 !important;
+}
+
+/* Hide the Richpanel chat launcher while the PDP sticky ATC bar is visible. ProductPageShell
+   adds this class (to every Richpanel element) on sticky-bar visibility, and removes it when
+   the bar scrolls away / a chat is open — so the launcher never overlaps the bar. */
+.mls-rp-hidden { display: none !important; }
+
+/* When any Radix overlay/dialog/sheet is open, push Richpanel behind it */
+body:has([data-radix-dialog-overlay][data-state="open"]) #richpanel-widget,
+body:has([data-radix-dialog-overlay][data-state="open"]) #richpanel-container,
+body:has([data-radix-dialog-overlay][data-state="open"]) [id^="richpanel"],
+body:has([data-radix-dialog-overlay][data-state="open"]) .richpanel-launcher {
+  z-index: 20 !important;
+}
+
+/* When sticky ATC options panel is expanded, push Richpanel behind it */
+body.atc-expanded #richpanel-widget,
+body.atc-expanded #richpanel-container,
+body.atc-expanded [id^="richpanel"],
+body.atc-expanded .richpanel-launcher {
+  z-index: 20 !important;
+}
+
+/* Language toggle active state — driven by html[lang] set from cookie via
+   inline <head> script, so it's correct before React even renders (no flash) */
+:root[lang="en"] .locale-btn[data-locale="en"],
+:root[lang="ar"] .locale-btn[data-locale="ar"] {
+  background-color: var(--crimson);
+  color: oklch(0.985 0.005 60);
+}
+
+
+
+/*
+ * MLS — Muscat Livestock Store design system.
+ * Brand: Deep Crimson #8B0000, Rich Red #C0392B, Off-White #FAF9F6,
+ * Charcoal #1A1A1A, Gold Accent #C9A84C.
+ *
+ * All colors are oklch. Tokens are mapped to Tailwind via @theme inline below.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  --font-display: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-body: "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+
+  --color-crimson: var(--crimson);
+  --color-crimson-foreground: var(--crimson-foreground);
+  --color-rich-red: var(--rich-red);
+  --color-charcoal: var(--charcoal);
+  --color-charcoal-foreground: var(--charcoal-foreground);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-off-white: var(--off-white);
+  --color-bone: var(--bone);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --shadow-elegant: 0 10px 40px -10px color-mix(in oklab, var(--crimson) 30%, transparent);
+  --shadow-card: 0 4px 24px -8px color-mix(in oklab, var(--charcoal) 18%, transparent);
+}
+
+:root {
+  --radius: 0.5rem;
+
+  /* Brand */
+  --crimson: oklch(0.36 0.18 27);            /* #8B0000 deep crimson */
+  --crimson-foreground: oklch(0.985 0.005 60);
+  --rich-red: oklch(0.52 0.21 28);           /* #C0392B */
+  --off-white: oklch(0.985 0.005 80);        /* #FAF9F6 */
+  --bone: oklch(0.96 0.008 80);
+  --charcoal: oklch(0.18 0.005 240);         /* #1A1A1A */
+  --charcoal-foreground: oklch(0.985 0.005 60);
+  --gold: oklch(0.74 0.11 80);               /* #C9A84C */
+  --gold-foreground: oklch(0.18 0.01 60);
+
+  /* Semantic */
+  --background: var(--off-white);
+  --foreground: var(--charcoal);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--charcoal);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--charcoal);
+  --primary: var(--crimson);
+  --primary-foreground: var(--crimson-foreground);
+  --secondary: var(--bone);
+  --secondary-foreground: var(--charcoal);
+  --muted: oklch(0.94 0.006 80);
+  --muted-foreground: oklch(0.45 0.01 60);
+  --accent: var(--gold);
+  --accent-foreground: var(--gold-foreground);
+  --destructive: oklch(0.55 0.22 27);
+  --destructive-foreground: oklch(0.985 0.005 60);
+  --border: oklch(0.9 0.008 80);
+  --input: oklch(0.9 0.008 80);
+  --ring: var(--crimson);
+
+  --chart-1: var(--crimson);
+  --chart-2: var(--gold);
+  --chart-3: var(--rich-red);
+  --chart-4: oklch(0.55 0.05 60);
+  --chart-5: var(--charcoal);
+
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: var(--charcoal);
+  --sidebar-primary: var(--crimson);
+  --sidebar-primary-foreground: var(--crimson-foreground);
+  --sidebar-accent: var(--bone);
+  --sidebar-accent-foreground: var(--charcoal);
+  --sidebar-border: oklch(0.9 0.008 80);
+  --sidebar-ring: var(--crimson);
+}
+
+.dark {
+  --background: var(--charcoal);
+  --foreground: var(--off-white);
+  --card: oklch(0.22 0.005 240);
+  --card-foreground: var(--off-white);
+  --popover: oklch(0.22 0.005 240);
+  --popover-foreground: var(--off-white);
+  --primary: var(--rich-red);
+  --primary-foreground: var(--off-white);
+  --secondary: oklch(0.26 0.005 240);
+  --secondary-foreground: var(--off-white);
+  --muted: oklch(0.26 0.005 240);
+  --muted-foreground: oklch(0.7 0.01 60);
+  --accent: var(--gold);
+  --accent-foreground: var(--charcoal);
+  --destructive: oklch(0.62 0.22 27);
+  --destructive-foreground: var(--off-white);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: var(--rich-red);
+}
+
+/* ── Judge.me widget — MLS brand ─────────────────────────────────────────── */
+
+/* Shimmer animation — used by skeleton loader before widget content loads */
+@keyframes mls-shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+.mls-skel-box {
+  background: linear-gradient(90deg,
+    oklch(0.93 0.006 80)  0px,
+    oklch(0.97 0.003 80) 200px,
+    oklch(0.93 0.006 80) 400px
+  );
+  background-size: 600px 100%;
+  animation: mls-shimmer 1.6s infinite linear;
+  border-radius: 0.25rem;
+}
+
+/* Card entrance — new cards fade+slide in after load-more */
+@keyframes mls-rev-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.jdgm-widget,
+.jdgm-widget * { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important; box-sizing: border-box !important; }
+/* overflow-x:hidden clips masonry's transient inline-widths before our !important overrides land */
+.jdgm-widget { overflow-x: hidden !important; }
+
+/* ── Stars ───────────────────────────────────────────────────────────────── */
+.jdgm--on, .jdgm--half { color: oklch(0.74 0.11 80) !important; }
+.jdgm--off              { color: oklch(0.88 0.03 80) !important; }
+
+/* ── Summary / header panel ─────────────────────────────────────────────── */
+/* Card frame only — no layout overrides. Judge.me controls the internal     */
+/* flex/grid; overriding flex-direction here breaks it across screen sizes.  */
+.jdgm-rev-widg__header {
+  background: #fff !important;
+  border: 1px solid oklch(0.91 0.007 80) !important;
+  border-radius: 0.875rem !important;
+  padding: 1rem 1.25rem !important;
+  margin-bottom: 1rem !important;
+  flex-wrap: wrap !important;       /* let items wrap on narrow viewports    */
+  gap: 0.75rem !important;          /* consistent spacing between JM blocks  */
+  align-items: center !important;   /* vertical centre across all columns    */
+}
+
+/* Rating number & review count — colors/typography only */
+.jdgm-rev-widg__summary-rating {
+  font-size: 2rem !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  color: oklch(0.18 0.005 240) !important;
+  letter-spacing: -0.02em !important;
+}
+.jdgm-rev-widg__summary-rec {
+  font-size: 0.75rem !important;
+  color: oklch(0.55 0.01 60) !important;
+}
+
+/* Histogram label / count — typography only, no width overrides */
+.jdgm-histogram-label, .jdgm-histogram__label {
+  font-size: 0.7rem !important;
+  color: oklch(0.48 0.01 60) !important;
+}
+.jdgm-histogram-count, .jdgm-histogram__count {
+  font-size: 0.7rem !important;
+  color: oklch(0.55 0.01 60) !important;
+}
+
+/* Histogram bar track & fill */
+.jdgm-histogram-bar, .jdgm-histogram__bar {
+  height: 6px !important;
+  background-color: oklch(0.92 0.006 80) !important;
+  border-radius: 9999px !important;
+  overflow: hidden !important;
+}
+.jdgm-histogram-bar .jdgm-histogram-bar-inner,
+.jdgm-histogram-bar-inner,
+.jdgm-histogram__bar-inner {
+  background-color: oklch(0.36 0.18 27) !important;
+  border-radius: 9999px !important;
+  height: 100% !important;
+  transition: width 0.6s ease !important;
+}
+
+/* Write a Review button */
+.jdgm-write-rev-link, a.jdgm-write-rev-link {
+  background-color: oklch(0.36 0.18 27) !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  color: #fff !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  padding: 0.5rem 1.25rem !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s, transform 0.1s !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+  letter-spacing: 0.01em !important;
+}
+.jdgm-write-rev-link:hover, a.jdgm-write-rev-link:hover {
+  background-color: oklch(0.52 0.21 28) !important;
+  transform: translateY(-1px) !important;
+  color: #fff !important;
+}
+
+/* ── Reviews grid — capped at 3 columns ─────────────────────────────────── */
+/* auto-fill would create 5+ columns on wide screens; explicit breakpoints
+   cap it at 3 and guarantee 1 col on mobile.                               */
+.jdgm-reviews-container,
+.jdgm-all-reviews-body,
+.jdgm-rev-widg__reviews {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 0.75rem !important;
+  position: relative !important;
+  height: auto !important;
+  width: 100% !important;
+  min-height: 80px !important;
+  transition: opacity 0.25s ease !important;
+}
+@media (min-width: 640px) {
+  .jdgm-reviews-container,
+  .jdgm-all-reviews-body,
+  .jdgm-rev-widg__reviews { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (min-width: 1024px) {
+  .jdgm-reviews-container,
+  .jdgm-all-reviews-body,
+  .jdgm-rev-widg__reviews { grid-template-columns: repeat(3, 1fr) !important; }
+}
+
+/* ── Review cards ────────────────────────────────────────────────────────── */
+/* width:100% + min-width:0 prevent masonry's inline-width from expanding
+   the card past its grid column even for the brief paint before !important lands */
+.jdgm-rev {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  float: none !important;
+  background: #fff !important;
+  border: 1px solid oklch(0.91 0.007 80) !important;
+  border-radius: 0.75rem !important;
+  padding: 1rem !important;
+  box-shadow: none !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+  margin-bottom: 0 !important;
+  break-inside: avoid !important;
+  animation: mls-rev-in 0.35s ease both !important;
+}
+.jdgm-rev:hover {
+  border-color: oklch(0.82 0.01 80) !important;
+  box-shadow: 0 4px 16px -6px oklch(0.18 0.005 240 / 0.12) !important;
+}
+.jdgm-rev__separator { display: none !important; }
+
+/* ── Card internals ──────────────────────────────────────────────────────── */
+.jdgm-rev__author    { font-weight: 600 !important; font-size: 0.825rem !important; color: oklch(0.18 0.005 240) !important; }
+.jdgm-rev__timestamp { font-size: 0.72rem !important; color: oklch(0.55 0.01 60) !important; }
+.jdgm-rev__title     { font-weight: 600 !important; font-size: 0.875rem !important; color: oklch(0.18 0.005 240) !important; display: block !important; margin-bottom: 0.25rem !important; }
+.jdgm-rev__body p, .jdgm-rev__body { font-size: 0.825rem !important; line-height: 1.55 !important; color: oklch(0.38 0.008 60) !important; }
+
+/* Avatar initials circle */
+.jdgm-rev__icon {
+  width: 32px !important; height: 32px !important; border-radius: 50% !important;
+  background-color: oklch(0.36 0.18 27) !important; color: #fff !important;
+  font-size: 0.75rem !important; font-weight: 700 !important;
+  display: flex !important; align-items: center !important; justify-content: center !important; flex-shrink: 0 !important;
+}
+
+/* Verified / gold badge */
+.jdgm-verified-badge, .jdgm-badge-icon, .jdgm-rev__verified-badge { color: oklch(0.74 0.11 80) !important; }
+
+/* ── Other-language reviews section ─────────────────────────────────────── */
+/* display:block prevents any stray Judge.me class from collapsing this section */
+.jdgm-other-reviews-section {
+  display: block !important;
+  margin-top: 1.75rem !important;
+  visibility: visible !important;
+}
+
+/* Smooth fade while loading more — opacity only, no pointer-events override.
+   pointer-events:none blocked Judge.me's JS callbacks and caused the
+   "Reviews in Other Languages" section to disappear after Load More.        */
+.jdgm-loading > .jdgm-reviews-container,
+.jdgm-loading > .jdgm-all-reviews-body,
+.jdgm-reviews-container.jdgm-loading,
+.jdgm-all-reviews-body.jdgm-loading {
+  opacity: 0.45 !important;
+}
+
+/* ── Photo gallery — horizontal scroll strip ─────────────────────────────── */
+.jdgm-media-gallery, .jdgm-gallery {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 0.375rem !important;
+  margin-bottom: 1rem !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  padding-bottom: 2px !important;
+}
+.jdgm-media-gallery::-webkit-scrollbar, .jdgm-gallery::-webkit-scrollbar { display: none !important; }
+.jdgm-media-gallery__thumb, .jdgm-media-item, .jdgm-gallery-item, .jdgm-media-thumb {
+  width: 64px !important; height: 64px !important; border-radius: 0.5rem !important;
+  overflow: hidden !important; border: 2px solid transparent !important;
+  transition: border-color 0.15s, transform 0.15s !important; cursor: pointer !important; flex-shrink: 0 !important;
+}
+.jdgm-media-gallery__thumb:hover, .jdgm-media-item:hover, .jdgm-gallery-item:hover, .jdgm-media-thumb:hover {
+  border-color: oklch(0.36 0.18 27) !important; transform: scale(1.05) !important;
+}
+.jdgm-media-gallery__thumb img, .jdgm-media-item img, .jdgm-gallery-item img, .jdgm-media-thumb img {
+  width: 100% !important; height: 100% !important; object-fit: cover !important; display: block !important;
+}
+a.jdgm-gallery__more-link, .jdgm-gallery-more {
+  width: 64px !important; height: 64px !important; border-radius: 0.5rem !important;
+  background-color: oklch(0.94 0.005 80) !important; border: 1.5px solid oklch(0.9 0.008 80) !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  color: oklch(0.36 0.18 27) !important; font-weight: 700 !important; font-size: 0.73rem !important;
+  text-decoration: none !important; transition: background-color 0.15s !important; flex-shrink: 0 !important;
+}
+a.jdgm-gallery__more-link:hover, .jdgm-gallery-more:hover { background-color: oklch(0.91 0.007 80) !important; }
+
+/* ── Review card large in-card photos — slider wrapper ───────────────────── */
+.jdgm-rev__pics,
+.jdgm-rev__pic-section {
+  position: relative !important;
+  display: block !important;
+  margin-top: 0.625rem !important;
+  overflow: hidden !important;
+  border-radius: 0.625rem !important;
+  height: 200px !important;
+  border: 1.5px solid oklch(0.9 0.008 80) !important;
+}
+/* kill any scroll Judge.me injects */
+.jdgm-rev__pics *,
+.jdgm-rev__pic-section * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.jdgm-rev__pics *::-webkit-scrollbar,
+.jdgm-rev__pic-section *::-webkit-scrollbar { display: none !important; }
+
+.jdgm-rev__pic,
+.jdgm-rev__pic-link,
+.jdgm-rev__pic-section a {
+  display: block !important;
+  width: 100% !important;
+  height: 200px !important;
+  overflow: hidden !important;
+  border-radius: 0 !important;
+  border: none !important;
+}
+.jdgm-rev__pic img,
+.jdgm-rev__pic-link img,
+.jdgm-rev__pic-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  display: block !important;
+  pointer-events: none !important;
+}
+/* slider dots injected by JS */
+.mls-rev-dots {
+  position: absolute !important;
+  bottom: 6px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  display: flex !important;
+  gap: 5px !important;
+  z-index: 2 !important;
+}
+.mls-rev-dot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background: rgba(255,255,255,0.5) !important;
+  border: none !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+  transition: background 0.2s !important;
+}
+.mls-rev-dot.on {
+  background: #fff !important;
+  transform: scale(1.25) !important;
+}
+
+/* ── Review card photo thumbnails — consistent 72×72 squares ────────────── */
+.jdgm-rev__photos,
+.jdgm-rev__picture-gallery {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.375rem !important;
+  margin-top: 0.5rem !important;
+}
+.jdgm-rev__photo,
+.jdgm-rev__photo-container,
+.jdgm-rev__picture {
+  width: 72px !important;
+  height: 72px !important;
+  min-width: 72px !important;
+  min-height: 72px !important;
+  max-width: 72px !important;
+  max-height: 72px !important;
+  overflow: hidden !important;
+  border-radius: 0.5rem !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+  border: 1.5px solid oklch(0.9 0.008 80) !important;
+  transition: border-color 0.15s, transform 0.15s !important;
+  cursor: pointer !important;
+}
+.jdgm-rev__photo:hover,
+.jdgm-rev__photo-container:hover,
+.jdgm-rev__picture:hover {
+  border-color: oklch(0.36 0.18 27) !important;
+  transform: scale(1.05) !important;
+}
+.jdgm-rev__photo img,
+.jdgm-rev__photo-container img,
+.jdgm-rev__picture img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  display: block !important;
+}
+
+/* ── Toolbar (sort + search) ─────────────────────────────────────────────── */
+.jdgm-all-reviews__toolbar, .jdgm-rev-widg__toolbar {
+  display: flex !important;
+  gap: 0.5rem !important;
+  margin-bottom: 0.875rem !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+}
+.jdgm-sort-button, select.jdgm-sort-button, .jdgm-all-reviews__sort {
+  border: 1px solid oklch(0.9 0.008 80) !important; border-radius: 0.5rem !important;
+  padding: 0.35rem 0.625rem !important; font-size: 0.8rem !important;
+  background-color: #fff !important; color: oklch(0.18 0.005 240) !important; cursor: pointer !important;
+}
+.jdgm-search-input, input.jdgm-search-input {
+  border: 1px solid oklch(0.9 0.008 80) !important; border-radius: 9999px !important;
+  padding: 0.35rem 0.875rem !important; font-size: 0.8rem !important;
+  background-color: #fff !important; color: oklch(0.18 0.005 240) !important;
+  flex: 1 !important; min-width: 0 !important;
+}
+.jdgm-search-input:focus, input.jdgm-search-input:focus {
+  outline: 2px solid oklch(0.36 0.18 27) !important; border-color: oklch(0.36 0.18 27) !important;
+}
+
+/* ── Pagination ──────────────────────────────────────────────────────────── */
+.jdgm-paginate {
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  gap: 0.3rem !important; margin-top: 1.25rem !important; margin-bottom: 0 !important; padding-bottom: 0 !important; flex-wrap: wrap !important;
+}
+/* Strip bottom padding from the widget root so there's no dead space below Load More */
+.jdgm-review-widget, .jdgm-widget { padding-bottom: 0 !important; }
+.jdgm-all-reviews-text { margin-bottom: 0 !important; }
+.jdgm-paginate a, .jdgm-paginate span {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  min-width: 32px !important; height: 32px !important; border-radius: 0.375rem !important;
+  border: 1px solid oklch(0.9 0.008 80) !important; font-size: 0.8rem !important;
+  color: oklch(0.35 0.008 60) !important; background: #fff !important;
+  cursor: pointer !important; transition: background-color 0.15s, color 0.15s, border-color 0.15s !important;
+  text-decoration: none !important; padding: 0 0.4rem !important;
+}
+.jdgm-paginate a:hover { background-color: oklch(0.36 0.18 27) !important; border-color: oklch(0.36 0.18 27) !important; color: #fff !important; }
+.jdgm-paginate .jdgm--active { background-color: oklch(0.36 0.18 27) !important; border-color: oklch(0.36 0.18 27) !important; color: #fff !important; font-weight: 600 !important; }
+
+/* Load More — outlined pill (fills crimson on hover) */
+.jdgm-paginate__load-more, a.jdgm-paginate__load-more {
+  background-color: transparent !important;
+  border: 1.5px solid oklch(0.36 0.18 27) !important;
+  border-radius: 9999px !important;
+  color: oklch(0.36 0.18 27) !important;
+  font-weight: 600 !important;
+  padding: 0.5rem 1.875rem !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s, color 0.15s, transform 0.1s !important;
+  text-decoration: none !important;
+  font-size: 0.825rem !important;
+  letter-spacing: 0.01em !important;
+  min-width: 0 !important;
+  height: auto !important;
+}
+.jdgm-paginate__load-more:hover, a.jdgm-paginate__load-more:hover {
+  background-color: oklch(0.36 0.18 27) !important; color: #fff !important; transform: translateY(-1px) !important;
+}
+
+/* ── Widget title ────────────────────────────────────────────────────────── */
+.jdgm-widget-title, .jdgm-all-reviews-text {
+  font-size: 1.1rem !important; font-weight: 700 !important;
+  color: oklch(0.18 0.005 240) !important; letter-spacing: -0.01em !important; margin-bottom: 0.875rem !important;
+}
+
+/* ── Write-review form ───────────────────────────────────────────────────── */
+.jdgm-form input, .jdgm-form textarea, .jdgm-form select {
+  border: 1px solid oklch(0.9 0.008 80) !important; border-radius: 0.5rem !important;
+  padding: 0.45rem 0.625rem !important; font-size: 0.85rem !important;
+  background: #fff !important; color: oklch(0.18 0.005 240) !important; width: 100% !important;
+}
+.jdgm-form input:focus, .jdgm-form textarea:focus {
+  outline: 2px solid oklch(0.36 0.18 27) !important; border-color: oklch(0.36 0.18 27) !important;
+}
+button.jdgm-submit-rev, .jdgm-form__submit {
+  background-color: oklch(0.36 0.18 27) !important; border: none !important;
+  border-radius: 9999px !important; color: #fff !important; font-weight: 600 !important;
+  padding: 0.5rem 1.75rem !important; cursor: pointer !important; transition: background-color 0.15s !important;
+}
+button.jdgm-submit-rev:hover, .jdgm-form__submit:hover { background-color: oklch(0.52 0.21 28) !important; }
+
+/* ── Links ───────────────────────────────────────────────────────────────── */
+.jdgm-widget a:not(.jdgm-write-rev-link):not(.jdgm-branding):not(.jdgm-paginate__load-more) {
+  color: oklch(0.36 0.18 27) !important; text-decoration: none !important;
+}
+.jdgm-widget a:not(.jdgm-write-rev-link):not(.jdgm-branding):not(.jdgm-paginate__load-more):hover {
+  color: oklch(0.52 0.21 28) !important;
+}
+
+/* Global container max-width — keeps content from stretching on ultrawide screens */
+.container {
+  max-width: min(1360px, 100%);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+    /* Prevent blue ring/outline flash before theme CSS variables resolve */
+    --tw-ring-color: transparent;
+    outline-color: transparent;
+  }
+
+  html {
+    font-family: var(--font-body);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  /* Strip underline from all anchors. */
+  :where(a) {
+    text-decoration: none;
+  }
+  /* Prevent browser-default blue on plain text links only.
+     Button-style links (those with px-* padding classes) are excluded so their
+     own text-* color classes are never overridden by inheritance. */
+  :where(a:not([class*="px-"])) {
+    color: inherit;
+  }
+
+  a,
+  button,
+  [role="button"],
+  label[for],
+  select,
+  summary,
+  [tabindex]:not([tabindex="-1"]) {
+    cursor: pointer;
+  }
+}
+
+

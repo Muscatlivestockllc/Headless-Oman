@@ -1,0 +1,173 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+
+
+/*
+ * MLS — Muscat Livestock Store design system.
+ * Brand: Deep Crimson #8B0000, Rich Red #C0392B, Off-White #FAF9F6,
+ * Charcoal #1A1A1A, Gold Accent #C9A84C.
+ *
+ * All colors are oklch. Tokens are mapped to Tailwind via @theme inline below.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  --font-display: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-body: "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+
+  --color-crimson: var(--crimson);
+  --color-crimson-foreground: var(--crimson-foreground);
+  --color-rich-red: var(--rich-red);
+  --color-charcoal: var(--charcoal);
+  --color-charcoal-foreground: var(--charcoal-foreground);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-off-white: var(--off-white);
+  --color-bone: var(--bone);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --shadow-elegant: 0 10px 40px -10px color-mix(in oklab, var(--crimson) 30%, transparent);
+  --shadow-card: 0 4px 24px -8px color-mix(in oklab, var(--charcoal) 18%, transparent);
+}
+
+:root {
+  --radius: 0.5rem;
+
+  /* Brand */
+  --crimson: oklch(0.36 0.18 27);            /* #8B0000 deep crimson */
+  --crimson-foreground: oklch(0.985 0.005 60);
+  --rich-red: oklch(0.52 0.21 28);           /* #C0392B */
+  --off-white: oklch(0.985 0.005 80);        /* #FAF9F6 */
+  --bone: oklch(0.96 0.008 80);
+  --charcoal: oklch(0.18 0.005 240);         /* #1A1A1A */
+  --charcoal-foreground: oklch(0.985 0.005 60);
+  --gold: oklch(0.74 0.11 80);               /* #C9A84C */
+  --gold-foreground: oklch(0.18 0.01 60);
+
+  /* Semantic */
+  --background: var(--off-white);
+  --foreground: var(--charcoal);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--charcoal);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--charcoal);
+  --primary: var(--crimson);
+  --primary-foreground: var(--crimson-foreground);
+  --secondary: var(--bone);
+  --secondary-foreground: var(--charcoal);
+  --muted: oklch(0.94 0.006 80);
+  --muted-foreground: oklch(0.45 0.01 60);
+  --accent: var(--gold);
+  --accent-foreground: var(--gold-foreground);
+  --destructive: oklch(0.55 0.22 27);
+  --destructive-foreground: oklch(0.985 0.005 60);
+  --border: oklch(0.9 0.008 80);
+  --input: oklch(0.9 0.008 80);
+  --ring: var(--crimson);
+
+  --chart-1: var(--crimson);
+  --chart-2: var(--gold);
+  --chart-3: var(--rich-red);
+  --chart-4: oklch(0.55 0.05 60);
+  --chart-5: var(--charcoal);
+
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: var(--charcoal);
+  --sidebar-primary: var(--crimson);
+  --sidebar-primary-foreground: var(--crimson-foreground);
+  --sidebar-accent: var(--bone);
+  --sidebar-accent-foreground: var(--charcoal);
+  --sidebar-border: oklch(0.9 0.008 80);
+  --sidebar-ring: var(--crimson);
+}
+
+.dark {
+  --background: var(--charcoal);
+  --foreground: var(--off-white);
+  --card: oklch(0.22 0.005 240);
+  --card-foreground: var(--off-white);
+  --popover: oklch(0.22 0.005 240);
+  --popover-foreground: var(--off-white);
+  --primary: var(--rich-red);
+  --primary-foreground: var(--off-white);
+  --secondary: oklch(0.26 0.005 240);
+  --secondary-foreground: var(--off-white);
+  --muted: oklch(0.26 0.005 240);
+  --muted-foreground: oklch(0.7 0.01 60);
+  --accent: var(--gold);
+  --accent-foreground: var(--charcoal);
+  --destructive: oklch(0.62 0.22 27);
+  --destructive-foreground: var(--off-white);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: var(--rich-red);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    font-family: var(--font-body);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+}
+

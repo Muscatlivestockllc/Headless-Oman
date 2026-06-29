@@ -1,0 +1,20 @@
+mutation {
+  metaobjectDefinitionCreate(definition: {
+    name: "Cart Drawer Config"
+    type: "mls_cart_drawer_config"
+    access: { storefront: PUBLIC_READ }
+    capabilities: { translatable: { enabled: true } }
+    fieldDefinitions: [
+      { name: "Free Shipping Threshold (AED)", key: "free_shipping_threshold", type: "number_integer", required: true }
+      { name: "Delivery Item 1", key: "delivery_item_1", type: "multi_line_text_field" }
+      { name: "Delivery Item 2", key: "delivery_item_2", type: "multi_line_text_field" }
+      { name: "Delivery Item 3", key: "delivery_item_3", type: "multi_line_text_field" }
+      { name: "Delivery Item 4", key: "delivery_item_4", type: "multi_line_text_field" }
+      { name: "Delivery Item 5", key: "delivery_item_5", type: "multi_line_text_field" }
+      { name: "Delivery Item 6", key: "delivery_item_6", type: "multi_line_text_field" }
+    ]
+  }) {
+    metaobjectDefinition { id type }
+    userErrors { field message }
+  }
+}

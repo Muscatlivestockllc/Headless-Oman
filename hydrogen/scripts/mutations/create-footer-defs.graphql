@@ -1,0 +1,36 @@
+mutation {
+  linkDef: metaobjectDefinitionCreate(definition: {
+    name: "Footer Link"
+    type: "mls_footer_link"
+    access: { storefront: PUBLIC_READ }
+    capabilities: { translatable: { enabled: true } }
+    fieldDefinitions: [
+      { name: "Label", key: "label", type: "single_line_text_field", required: true }
+      { name: "URL",   key: "url",   type: "single_line_text_field", required: true }
+    ]
+  }) {
+    metaobjectDefinition { id type }
+    userErrors { field message }
+  }
+
+  settingsDef: metaobjectDefinitionCreate(definition: {
+    name: "Footer Settings"
+    type: "mls_footer_settings"
+    access: { storefront: PUBLIC_READ }
+    capabilities: { translatable: { enabled: true } }
+    fieldDefinitions: [
+      { name: "Brand Text",      key: "brand_text",       type: "single_line_text_field" }
+      { name: "Instagram URL",   key: "instagram_url",    type: "single_line_text_field" }
+      { name: "Facebook URL",    key: "facebook_url",     type: "single_line_text_field" }
+      { name: "Contact Heading", key: "contact_heading",  type: "single_line_text_field" }
+      { name: "Address",         key: "address",          type: "single_line_text_field" }
+      { name: "Phone",           key: "phone",            type: "single_line_text_field" }
+      { name: "Email",           key: "email",            type: "single_line_text_field" }
+      { name: "Copyright",       key: "copyright",        type: "single_line_text_field" }
+      { name: "Bottom Tagline",  key: "bottom_tagline",   type: "single_line_text_field" }
+    ]
+  }) {
+    metaobjectDefinition { id type }
+    userErrors { field message }
+  }
+}
