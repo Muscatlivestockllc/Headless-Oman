@@ -46,4 +46,5 @@ jobs:
         run: npx shopify hydrogen deploy --env-branch "${{ github.ref_name }}"
         working-directory: hydrogen
         env:
-          SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN: ${{ secrets.SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN }}
+          # Secret auto-created by Shopify's Oxygen GitHub integration for this storefront.
+          SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN: ${{ secrets.OXYGEN_DEPLOYMENT_TOKEN_1000153258 }}
