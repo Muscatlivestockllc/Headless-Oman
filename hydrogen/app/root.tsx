@@ -149,11 +149,11 @@ const LAYOUT_QUERY = `#graphql
       items { ...MenuFields }
     }
 
-    footerShop: menu(handle: "footer") {
+    footerShop: menu(handle: "about-mls") {
       id title items { id title url }
     }
 
-    footerHelp: menu(handle: "footer-2") {
+    footerHelp: menu(handle: "customer-care") {
       id title items { id title url }
     }
 
