@@ -13,15 +13,11 @@ import { OptionButton } from "@/components/shared/OptionButton";
 import { useQuickBuyStore } from "@/stores/quickBuyStore";
 import { useCartStore } from "@/stores/cartStore";
 import { formatPrice, shopifyImageUrl } from "@/lib/shopify";
-import {
-  SubscriptionSelector,
-  parseSellingPlanGroups,
-  type SellingPlanGroup,
-} from "@/components/product/SubscriptionSelector";
+// Recharge subscriptions removed.
 
 // Per-handle cache so re-opening the same product is instant (no spinner)
 type PlanData = {
-  groups: SellingPlanGroup[];
+  groups: any[];
   variantAllocations: Record<string, Record<string, string>>;
 };
 const _planCache = new Map<string, PlanData>();
@@ -44,7 +40,7 @@ export function QuickBuyDrawer() {
 
   // Subscription state
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
-  const [sellingPlanGroups, setSellingPlanGroups] = useState<SellingPlanGroup[]>([]);
+  const [sellingPlanGroups, setSellingPlanGroups] = useState<any[]>([]);
   const [fetchingPlans, setFetchingPlans] = useState(false);
   // variantId → { planId → subscriptionPriceAmount }
   const [variantAllocations, setVariantAllocations] = useState<Record<string, Record<string, string>>>({});
@@ -66,69 +62,11 @@ export function QuickBuyDrawer() {
   // Cache hit → instant (no spinner). Miss → fetch with one auto-retry.
   // AbortController cancels in-flight requests when product changes or drawer unmounts.
   useEffect(() => {
-    if (!node?.handle) {
-      setSelectedPlanId(null);
-      setSellingPlanGroups([]);
-      setVariantAllocations({});
-      return;
-    }
-
-    // Clear any error left from a previous product
-    useCartStore.setState({ addItemError: null });
-
-    const cached = _planCache.get(node.handle);
-    if (cached) {
-      setSelectedPlanId(null);
-      setSellingPlanGroups(cached.groups);
-      setVariantAllocations(cached.variantAllocations);
-      return;
-    }
-
+    // Recharge subscriptions removed — just reset plan state on product change.
     setSelectedPlanId(null);
     setSellingPlanGroups([]);
     setVariantAllocations({});
-    setFetchingPlans(true);
-
-    const ac = new AbortController();
-
-    const load = async (): Promise<void> => {
-      try {
-        for (let attempt = 0; attempt <= 1; attempt++) {
-          if (ac.signal.aborted) return;
-          try {
-            const res = await fetch(`/api/selling-plans/${node.handle}`, { signal: ac.signal });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json() as {
-              groups: any[];
-              discountMap: Record<string, number>;
-              variantAllocations: Record<string, Record<string, string>>;
-            };
-            const groups = parseSellingPlanGroups(data.groups ?? [], data.discountMap ?? {});
-            const allocs = data.variantAllocations ?? {};
-            _planCache.set(node.handle, { groups, variantAllocations: allocs });
-            setSellingPlanGroups(groups);
-            setVariantAllocations(allocs);
-            return;
-          } catch (err: any) {
-            if (ac.signal.aborted || err?.name === "AbortError") return;
-            if (attempt < 1) {
-              await new Promise<void>((r) => setTimeout(r, 400));
-              continue;
-            }
-            console.warn("[QuickBuy] Failed to load subscription plans:", err);
-          }
-        }
-      } finally {
-        if (!ac.signal.aborted) setFetchingPlans(false);
-      }
-    };
-
-    load();
-
-    return () => {
-      ac.abort();
-      setFetchingPlans(false);
-    };
+    if (node?.handle) useCartStore.setState({ addItemError: null });
   }, [node?.handle]);
 
   const matched = variants.find((v) =>
@@ -271,26 +209,6 @@ export function QuickBuyDrawer() {
             })}
 
             {/* Subscription selector */}
-            {fetchingPlans ? (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Loading subscription options…
-              </div>
-            ) : sellingPlanGroups.length > 0 ? (
-              <div>
-                <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground sm:mb-2 sm:text-xs">
-                  Purchase Type
-                </div>
-                <SubscriptionSelector
-                  groups={sellingPlanGroups}
-                  selectedPlanId={selectedPlanId}
-                  onSelect={setSelectedPlanId}
-                  regularPrice={regularPrice?.amount ?? "0"}
-                  currency={currency}
-                  planPrices={planPrices}
-                />
-              </div>
-            ) : null}
 
             {/* Quantity */}
             <div>

@@ -22,7 +22,7 @@ import { useRecentlyViewed } from "~/stores/recentlyViewedStore";
 import { JudgemeReviews } from "~/components/reviews/JudgemeReviews";
 import { JudgemeWidgetEmbed } from "~/components/reviews/JudgemeWidgetEmbed";
 import { StarRating } from "~/components/reviews/StarRating";
-import { SubscriptionSelector, parseSellingPlanGroups } from "~/components/product/SubscriptionSelector";
+// Recharge subscriptions removed — no SubscriptionSelector / selling plans.
 import { ProductCard } from "~/components/product/ProductCard";
 import { HScroller } from "~/components/home/HScroller";
 import { RecentlyViewed } from "~/components/home/RecentlyViewed";
@@ -1026,7 +1026,7 @@ export function ProductPageShell({
   const displayRating = rating.average > 0 ? rating : metaRating;
   const displayCount = reviewsTotalCount > 0 ? reviewsTotalCount : metaRating.count;
 
-  const sellingPlanGroups = parseSellingPlanGroups(sellingPlanGroupsRaw, discountMap);
+  const sellingPlanGroups: any[] = []; // Recharge subscriptions removed
   const addItem = useCartStore((s) => s.addItem);
   const [isAdding, setIsAdding] = useState(false);
 
@@ -1417,12 +1417,6 @@ export function ProductPageShell({
             </div>
           )}
 
-          {/* Subscription */}
-          {sellingPlanGroups.length > 0 && (
-            <SubscriptionSelector groups={sellingPlanGroups} selectedPlanId={selectedPlanId} onSelect={setSelectedPlanId}
-              regularPrice={variant?.price.amount ?? "0"} currency={currency} />
-          )}
-
           {/* Special Request — all templates except whole cuts */}
           {templateSuffix !== "whole-cuts" && templateSuffix !== "abu-dhabi-10kg-aus" && (
             <div className="flex flex-col gap-1.5">
@@ -1642,17 +1636,6 @@ export function ProductPageShell({
                   );
                 })}
               </div>
-            )}
-
-            {/* Subscription selector */}
-            {sellingPlanGroups.length > 0 && (
-              <SubscriptionSelector
-                groups={sellingPlanGroups}
-                selectedPlanId={selectedPlanId}
-                onSelect={setSelectedPlanId}
-                regularPrice={variant?.price.amount ?? "0"}
-                currency={currency}
-              />
             )}
 
             {/* Special request in sticky bar — same state as main form */}

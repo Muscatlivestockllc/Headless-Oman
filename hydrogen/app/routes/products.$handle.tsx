@@ -134,14 +134,6 @@ const PRODUCT_QUERY = `#graphql
         minVariantPrice { amount currencyCode }
         maxVariantPrice { amount currencyCode }
       }
-      sellingPlanGroups(first: 10) {
-        nodes {
-          name
-          sellingPlans(first: 10) {
-            nodes { id name recurringDeliveries }
-          }
-        }
-      }
       variants(first: 250) {
         nodes {
           id title availableForSale quantityAvailable
@@ -197,15 +189,6 @@ const PRODUCT_QUERY = `#graphql
             {namespace: "nutrition", key: "iron"}
             {namespace: "nutrition", key: "iron_dv"}
           ]) { key namespace value }
-          sellingPlanAllocations(first: 10) {
-            nodes {
-              sellingPlan { id }
-              priceAdjustments {
-                price { amount currencyCode }
-                compareAtPrice { amount currencyCode }
-              }
-            }
-          }
         }
       }
       metafields(identifiers: [
@@ -372,28 +355,6 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
       ])
     : Promise.resolve([]);
 
-  // Compute discount map synchronously from already-fetched product data
-  const discountMap: Record<string, number> = {};
-  for (const v of data.product.variants?.nodes ?? []) {
-    const variantPrice = parseFloat((v as any).price?.amount ?? "0");
-    for (const alloc of (v as any).sellingPlanAllocations?.nodes ?? []) {
-      const planId = alloc.sellingPlan?.id;
-      const adj = alloc.priceAdjustments?.[0];
-      if (!planId || !adj || discountMap[planId] !== undefined) continue;
-      const subPrice = parseFloat(adj.price?.amount ?? "0");
-      const baseline = parseFloat(adj.compareAtPrice?.amount ?? "0") || variantPrice;
-      if (baseline > 0 && subPrice < baseline) {
-        discountMap[planId] = Math.round(((baseline - subPrice) / baseline) * 100);
-      }
-    }
-  }
-  for (const group of data.product.sellingPlanGroups?.nodes ?? []) {
-    for (const plan of (group as any).sellingPlans?.nodes ?? []) {
-      if (plan.id && discountMap[plan.id] === undefined) {
-        discountMap[plan.id] = 10;
-      }
-    }
-  }
 
   // ── Phase 2 — Admin (by GID) + Reviews in parallel ──────────────────────────────────────
   // Admin API queried by GID so it works for any handle language (EN or translated).
@@ -536,8 +497,6 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
     product: data.product,
     canonicalHandle,
     templateSuffix,
-    sellingPlanGroupsRaw: data.product.sellingPlanGroups?.nodes ?? [],
-    discountMap,
     externalId: externalId ?? null,
     reviews: ((reviewsFetchResult as any).reviews ?? []).filter((r: any) => r.rating >= 4),
     reviewsTotalCount: (reviewsFetchResult as any).total_count ?? 0,
@@ -560,7 +519,6 @@ function renderTemplate(suffix: string | null | undefined, props: any) {
     case "prime-signature-box":
     case "nadeem-s-box":
     case "prime-steak-box":
-    case "recharge-bundle":
     case "bundle-builder":      return <BoxCollectionsTemplate {...props} />;
     // ── New templates ────────────────────────────────────────────────────────
     case "seasoned-marinades":  return <SeasonedMarinadesTemplate {...props} />;
