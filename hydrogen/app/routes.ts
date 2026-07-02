@@ -73,6 +73,7 @@ export default hydrogenRoutes([
   route('pages/faqs', 'routes/pages.faqs.tsx'),
   route('pages/mls-gourmet', 'routes/pages.mls-gourmet.tsx'),
   route('pages/our-story-new', 'routes/pages.our-story-new.tsx'),
+  route('pages/our-story', 'routes/pages.our-story-new.tsx', { id: 'pages-our-story' }),
   route('pages/mls-affiliate', 'routes/pages.mls-affiliate.tsx'),
   route('pages/delivery-info', 'routes/pages.delivery-info.tsx'),
   route('pages/:handle', 'routes/pages.$handle.tsx'),
