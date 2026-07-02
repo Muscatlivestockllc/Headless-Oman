@@ -207,7 +207,7 @@ export async function loader({ params, request, context }: LoaderFunctionArgs) {
       reverse,
       filters: productFilters,
       language,
-      country: "AE" as const,
+      country: "OM" as const,
     },
     cache: context.storefront.CacheShort(),
   });

@@ -442,7 +442,7 @@ const HOME_JSON_LD = {
     "@type": "PostalAddress",
     streetAddress: "SHS Tower, Suite 81, Ghala",
     addressLocality: "Muscat",
-    addressCountry: "AE",
+    addressCountry: "OM",
   },
   contactPoint: {
     "@type": "ContactPoint",
@@ -475,7 +475,7 @@ const LOCAL_BUSINESS_JSON_LD = {
     "@type": "PostalAddress",
     streetAddress: "SHS Tower, Suite 81, Ghala",
     addressLocality: "Muscat",
-    addressCountry: "AE",
+    addressCountry: "OM",
   },
   geo: { "@type": "GeoCoordinates", latitude: 25.185, longitude: 55.267 },
   openingHoursSpecification: {
@@ -554,7 +554,7 @@ function pickReels(edges: any[]): ReelProduct[] {
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const af = (q: string) => context.adminFetch(q).then((d: any) => d?.nodes ?? {});
   const language = detectLanguage(request);
-  const country = "AE" as const;
+  const country = "OM" as const;
 
   // Run Admin API (structure, always available) and Storefront API (translations, requires
   // Storefront API access per metaobject type) in parallel. For each section we prefer the
@@ -679,7 +679,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   if (reelProductIds.length > 0) {
     try {
       const priceData = await context.storefront.query(REEL_PRODUCT_PRICES_QUERY, {
-        variables: { ids: reelProductIds, country: "AE" as const },
+        variables: { ids: reelProductIds, country: "OM" as const },
       });
       for (const n of priceData?.nodes ?? []) {
         if (n?.id && n.priceRange?.minVariantPrice) {

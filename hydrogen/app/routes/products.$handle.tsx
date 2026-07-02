@@ -302,7 +302,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
   // Admin query runs in Phase 2 (needs product GID from Storefront response).
   const [data, iconBadgesRaw] = await Promise.all([
     context.storefront.query(PRODUCT_QUERY, {
-      variables: { handle, language, country: "AE" as const },
+      variables: { handle, language, country: "OM" as const },
       cache: context.storefront.CacheShort(),
     }),
     context.adminFetch(`{ nodes: metaobjects(type: "icon_with_text", first: 10) { nodes { id handle fields { key value reference { ... on MediaImage { image { url altText } } } } } } }`).catch(() => null),
@@ -400,7 +400,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
   const lazyData = Promise.race([
     Promise.all([
       context.storefront.query(RECOMMENDATIONS_QUERY, {
-        variables: { productId: data.product.id, language, country: "AE" as const },
+        variables: { productId: data.product.id, language, country: "OM" as const },
       }).catch(() => null),
       context.adminFetch(PAGE_SETTINGS_QUERY).catch(() => null),
       context.adminFetch(TEMPLATE_SETTINGS_QUERY).catch(() => null),
@@ -540,7 +540,7 @@ export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
     || (product?.title ? `Buy ${product.title} Online in Muscat - MLS Oman` : "MLS Oman — Fresh Meat Delivery in Muscat");
   const description = (product?.seo?.description?.trim()
     || product?.description
-    || "Premium halal meat delivered across UAE.").slice(0, 160);
+    || "Premium halal meat delivered across Oman.").slice(0, 160);
   const image = product?.images?.edges?.[0]?.node?.url ?? product?.images?.nodes?.[0]?.url;
   const canonical = `https://mls.om${location.pathname}`;
 

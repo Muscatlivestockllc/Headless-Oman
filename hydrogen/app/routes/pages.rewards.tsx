@@ -37,7 +37,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   try {
     const language = detectLanguage(request);
     const data = await context.storefront.query(REWARDS_QUERY, {
-      variables: { language, country: "AE" as const },
+      variables: { language, country: "OM" as const },
       cache: context.storefront.CacheNone(),
     });
     if (language === "AR") applyArImages(data);

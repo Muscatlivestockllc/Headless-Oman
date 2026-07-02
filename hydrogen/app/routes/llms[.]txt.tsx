@@ -4,7 +4,7 @@ import type { LoaderFunctionArgs } from "@shopify/remix-oxygen";
 // Yoast-generated file from the Shopify theme but built live from the Storefront API so it
 // never goes stale. Lists pages, recent blog posts, blogs, products and collections.
 const SITE_URL = "https://mls.om";
-const TITLE = "MLS Premium Meat supplier in UAE | Order Online Butcher";
+const TITLE = "MLS Premium Meat supplier in Oman | Order Online Butcher";
 const DESCRIPTION =
   "Fresh premium meat delivered within 1–2 hours across Muscat. Order halal beef, lamb, chicken & more with fast, hygienic doorstep delivery.";
 

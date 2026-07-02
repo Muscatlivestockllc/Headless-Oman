@@ -31,7 +31,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const language = (lang === "ar" ? "AR" : "EN") as "AR" | "EN";
 
   const { collections } = await context.storefront.query(COLLECTIONS_QUERY, {
-    variables: { language, country: "AE" as const },
+    variables: { language, country: "OM" as const },
     cache: context.storefront.CacheShort(),
   });
 

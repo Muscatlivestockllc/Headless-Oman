@@ -55,7 +55,7 @@ const ADMIN_QUERY = `
 
 const FALLBACK_CITIES = [
   {
-    id: "dubai",
+    id: "muscat",
     label: "Muscat",
     emoji: "🏙️",
     cutoff: "10:00 PM",
@@ -67,36 +67,6 @@ const FALLBACK_CITIES = [
       "Order anytime up to 10:00 PM for same-day delivery",
       "No minimum order value",
       "Deliveries continue until 10:30 PM",
-    ],
-  },
-  {
-    id: "abudhabi",
-    label: "Muscat",
-    emoji: "🌴",
-    cutoff: "10:00 PM",
-    window: "2 hours",
-    hours: "10 AM – 10:00 PM, all days",
-    fee: "OMR 0.890",
-    notes: [
-      "Express delivery across Muscat",
-      "Order anytime up to 10:00 PM for same-day delivery",
-      "No minimum order value",
-      "Deliveries continue until 10:30 PM",
-    ],
-  },
-  {
-    id: "sharjah",
-    label: "Muscat",
-    emoji: "🏡",
-    cutoff: "1:00 PM",
-    window: "Same day",
-    hours: "Confirm before 1:00 PM",
-    fee: "OMR 0.890",
-    notes: [
-      "Same-day delivery when ordered before 1:00 PM",
-      "No minimum order value",
-      "Order after 1:00 PM = next-day delivery",
-      "Delivery across all Muscat areas",
     ],
   },
 ];
@@ -120,7 +90,7 @@ const FALLBACK_RETURNS = [
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const language = detectLanguage(request);
   const adminData = await context.storefront.query(ADMIN_QUERY, {
-    variables: { language, country: "AE" as const },
+    variables: { language, country: "OM" as const },
     cache: context.storefront.CacheNone(),
   });
 
@@ -150,7 +120,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const returnsItems = (f.returns_items?.value ?? "").split("\n").filter(Boolean);
 
   return {
-    heroSubtitle: f.hero_subtitle?.value ?? "Same-day delivery across the UAE. Fresh, chilled, and on time.",
+    heroSubtitle: f.hero_subtitle?.value ?? "Same-day delivery across Muscat. Fresh, chilled, and on time.",
     returnsTitle: f.returns_title?.value ?? "100% Free Replacements & Returns",
     cities: cities.length > 0 ? cities : FALLBACK_CITIES,
     faqs: faqs.length > 0 ? faqs : FALLBACK_FAQS,

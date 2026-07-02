@@ -253,7 +253,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
   // If the AR query returns no section references (type not yet set up for AR in T&A),
   // fall back to EN so the page at least renders.
   let data = await context.storefront.query(PAGE_QUERY, {
-    variables: { handle, language: userLanguage, country: "AE" as const },
+    variables: { handle, language: userLanguage, country: "OM" as const },
     cache: context.storefront.CacheNone(),
   });
 
@@ -270,7 +270,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
   // otherwise we'd blank a perfectly good AR prose page.
   if (lpPageNodes.length === 0 && userLanguage !== "EN") {
     const enData = await context.storefront.query(PAGE_QUERY, {
-      variables: { handle, language: "EN" as const, country: "AE" as const },
+      variables: { handle, language: "EN" as const, country: "OM" as const },
       cache: context.storefront.CacheNone(),
     });
     const enMetafields = (enData.page?.metafields ?? []).filter(Boolean);
@@ -354,7 +354,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
   const productsByCollection: Record<string, any[]> = {};
   const tasks: Promise<unknown>[] = Array.from(collectionHandles).map(async (collHandle) => {
     const r = await context.storefront.query(COLLECTION_PRODUCTS_QUERY, {
-      variables: { handle: collHandle, language: userLanguage, country: "AE" as const },
+      variables: { handle: collHandle, language: userLanguage, country: "OM" as const },
       cache: context.storefront.CacheNone(),
     });
     productsByCollection[collHandle] = r.collection?.products?.nodes ?? [];
@@ -362,7 +362,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
 
   // Always fetch reel items — some pages use video reels
   const reelData = await context.storefront.query(REEL_ITEMS_QUERY, {
-    variables: { language: userLanguage, country: "AE" as const },
+    variables: { language: userLanguage, country: "OM" as const },
     cache: context.storefront.CacheNone(),
   });
   const reelItems: any[] = reelData.metaobjects?.nodes ?? [];

@@ -16,7 +16,7 @@ function clean(s: string): string {
 
 export const meta: MetaFunction = () => [
   { title: "Our Story — MLS Oman" },
-  { name: "description", content: "45 years of butchery excellence. From Oman to the UAE." },
+  { name: "description", content: "45 years of butchery excellence, delivered fresh across Oman." },
 ];
 
 const PAGE_QUERY = `
@@ -53,7 +53,7 @@ function toEmbed(url: string): string {
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const language = detectLanguage(request);
   const data = await context.storefront.query(PAGE_QUERY, {
-    variables: { language, country: "AE" as const },
+    variables: { language, country: "OM" as const },
     cache: context.storefront.CacheNone(),
   });
   if (language === "AR") applyArImages(data);
@@ -74,7 +74,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     heroImage:          f.hero_image?.reference?.image?.url          ?? "",
     quoteText:          clean(f.quote_text?.value                    ?? "WE EXIST TO NOURISH PEOPLE WITH NATURE'S FINEST RED MEAT."),
     slides,
-    storyHeading:       clean(f.story_heading?.value                 ?? "Expanding from Oman to UAE:"),
+    storyHeading:       clean(f.story_heading?.value                 ?? "Rooted in Oman:"),
     storySubheading:    clean(f.story_subheading?.value              ?? "A Butchery Legacy"),
     storyDescription:   clean(f.story_description?.value            ?? ""),
     storyImage:         f.story_image?.reference?.image?.url         ?? "",
@@ -145,7 +145,7 @@ function HeroSection({ image, quote }: { image: string; quote: string }) {
   const STATS = [
     { value: "45+",      label: "Years of craft" },
     { value: "100+",     label: "Premium cuts" },
-    { value: "UAE",        label: "Where we serve" },
+    { value: "Oman",       label: "Where we serve" },
     { value: "100%",     label: "Halal certified" },
   ] as const;
 

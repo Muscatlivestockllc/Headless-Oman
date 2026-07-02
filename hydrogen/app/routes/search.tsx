@@ -63,7 +63,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
   const language = detectLanguage(request);
   const data = await context.storefront.query(SEARCH_QUERY, {
-    variables: { query: q, first: 24, language, country: "AE" as const },
+    variables: { query: q, first: 24, language, country: "OM" as const },
   });
 
   const products: ShopifyProduct[] = (data?.search?.nodes ?? [])

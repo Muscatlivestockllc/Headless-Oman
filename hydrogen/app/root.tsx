@@ -450,7 +450,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   try {
     const [data, adminData] = await Promise.all([
       context.storefront.query(LAYOUT_QUERY, {
-        variables: { language, country: "AE" as const },
+        variables: { language, country: "OM" as const },
         cache: context.storefront.CacheShort(),
       }),
       context.adminFetch(ADMIN_FOOTER_QUERY),
@@ -492,7 +492,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     if (language === "AR") {
       try {
         const en = await context.storefront.query(NAV_EN_HELPER_QUERY, {
-          variables: { language: "EN" as const, country: "AE" as const },
+          variables: { language: "EN" as const, country: "OM" as const },
           cache: context.storefront.CacheShort(),
         });
         const idToEnLabel: Record<string, string> = {};

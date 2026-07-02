@@ -28,7 +28,7 @@ export function RecentlyViewed({ excludeHandle }: RecentlyViewedProps = {}) {
         first: handles.length,
         query,
         language,
-        country: "AE",
+        country: "OM",
       });
       const products: ShopifyProduct[] = (res?.data?.products?.edges ?? [])
         .filter((p: ShopifyProduct) => parseFloat(p.node.priceRange.minVariantPrice.amount) > 0);

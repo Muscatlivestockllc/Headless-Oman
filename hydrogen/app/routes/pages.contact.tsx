@@ -25,7 +25,7 @@ export const meta: MetaFunction = () => [
         "@type": "PostalAddress",
         streetAddress: "SHS Tower, Suite 81, Ghala",
         addressLocality: "Muscat",
-        addressCountry: "AE",
+        addressCountry: "OM",
       },
       openingHours: "Mo-Su 09:00-22:00",
     },
@@ -52,7 +52,7 @@ const CONTACT_QUERY = `
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const language = detectLanguage(request);
   const data = await context.storefront.query(CONTACT_QUERY, {
-    variables: { language, country: "AE" as const },
+    variables: { language, country: "OM" as const },
     cache: context.storefront.CacheNone(),
   });
   if (language === "AR") applyArImages(data);
@@ -69,7 +69,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     hoursSub:     fields.hours_sub?.value     ?? "All days of the week",
     addressLine1: fields.address_line1?.value ?? "E-09, Light Industrial Unit 6",
     addressLine2: fields.address_line2?.value ?? "Ghala · Muscat · Oman",
-    whatsappUrl:  fields.whatsapp_url?.value  ?? "https://wa.me/971504516403",
+    whatsappUrl:  fields.whatsapp_url?.value  ?? "https://wa.me/96892423242",
     mapsUrl:      fields.maps_url?.value      ?? "https://maps.google.com/?q=SHS+Tower+Ghala+Muscat+Oman",
   };
 }

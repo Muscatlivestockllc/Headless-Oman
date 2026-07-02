@@ -61,7 +61,7 @@ export function Footer({ settings, menuCols }: Props) {
     facebook:      settings?.facebookUrl,
     twitter:       settings?.twitterUrl,
     tiktok:        settings?.tiktokUrl,
-    whatsapp:      settings?.whatsappUrl    || `https://wa.me/971504516403`,
+    whatsapp:      settings?.whatsappUrl    || `https://wa.me/96892423242`,
     linkedin:      settings?.linkedinUrl,
     brandText:     settings?.brandText,
     copyright:     settings?.copyright      || DEFAULTS.copyright,
@@ -118,7 +118,7 @@ export function Footer({ settings, menuCols }: Props) {
 }
 
 function BrandCol({ contact }: { contact: ContactData }) {
-  const whatsappHref = "https://wa.me/971504516403";
+  const whatsappHref = "https://wa.me/96892423242";
 
   return (
     <div className="min-w-[240px] max-w-[300px] flex-1">
