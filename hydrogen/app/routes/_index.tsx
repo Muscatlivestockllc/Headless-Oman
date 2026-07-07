@@ -457,7 +457,7 @@ const HOME_JSON_LD = {
   },
   contactPoint: {
     "@type": "ContactPoint",
-    telephone: "+96892423242",
+    telephone: "+96824026400",
     contactType: "customer service",
     availableLanguage: ["English", "Arabic"],
   },
@@ -481,7 +481,7 @@ const LOCAL_BUSINESS_JSON_LD = {
   name: "MLS Oman — Fresh Meat Delivery",
   url: "https://mls.om",
   image: "https://mls.om/cdn/shop/files/logo_97c8d848-b3ec-4a82-a68e-dcedc161529c.png?v=1711022728",
-  telephone: "+96892423242",
+  telephone: "+96824026400",
   priceRange: "OMR 2 - OMR 100",
   servesCuisine: "Halal Meat",
   areaServed: [{ "@type": "City", name: "Muscat" }],

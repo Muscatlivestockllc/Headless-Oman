@@ -19,7 +19,7 @@ export const meta: MetaFunction = () => [
       "@type": "Organization",
       name: "MLS Oman",
       url: "https://mls.om",
-      telephone: "+96892423242",
+      telephone: "+96824026400",
       email: "contactus@mls.om",
       address: {
         "@type": "PostalAddress",
@@ -63,7 +63,8 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     heroTitle:    fields.hero_title?.value    ?? "Get in Touch",
     heroSubtitle: fields.hero_subtitle?.value ?? "Questions about your order, custom cuts, or bulk buying? Our team responds within the hour.",
     heroImage:    fields.hero_image?.reference?.image?.url ?? null,
-    phone:        fields.phone?.value         ?? "+968 92423242",
+    phone:        fields.phone?.value         ?? "+968 24026400",   // call / telephone
+    whatsappNo:   fields.whatsapp_number?.value ?? "+968 92423242",  // WhatsApp (different number)
     email:        fields.email?.value         ?? "contactus@mls.om",
     hours:        fields.hours?.value         ?? "9 AM – 10 PM",
     hoursSub:     fields.hours_sub?.value     ?? "All days of the week",
@@ -159,7 +160,8 @@ export default function ContactPage() {
   const submitting = navigation.state === "submitting";
 
   const cards = [
-    { icon: Phone, label: "WhatsApp / Call", value: data.phone,        sub: "Tap to open WhatsApp",      href: data.whatsappUrl,  color: "#25D366" },
+    { icon: Phone,         label: "Call",     value: data.phone,      sub: "Tap to call",            href: `tel:${data.phone.replace(/\s/g, "")}`, color: "var(--color-crimson,#8b0000)" },
+    { icon: MessageCircle, label: "WhatsApp", value: data.whatsappNo, sub: "Tap to open WhatsApp",   href: data.whatsappUrl,  color: "#25D366" },
     { icon: Mail,  label: "Email",            value: data.email,        sub: "We reply within a few hours", href: `mailto:${data.email}`, color: "var(--color-crimson,#8b0000)" },
     { icon: Clock, label: "Support Hours",    value: data.hours,        sub: data.hoursSub,               href: null,              color: "var(--color-crimson,#8b0000)" },
     { icon: MapPin,label: "Address",          value: data.addressLine1, sub: data.addressLine2,           href: data.mapsUrl,      color: "var(--color-crimson,#8b0000)" },

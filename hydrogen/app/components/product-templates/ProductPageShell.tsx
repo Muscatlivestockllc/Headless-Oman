@@ -371,7 +371,7 @@ function DeliveryTab({ pageSettings }: { pageSettings: PageSettings | undefined 
     { label: "Last Order Time",       body: "10:00 PM is our last order cutoff, all days of the week." },
     { label: "Delivery Fee",          body: "No minimum order value. Standard delivery fee is OMR 0.890." },
     { label: "Free Returns",          body: "We offer a \"no questions asked\" free returns policy which allows you to return delivered items to us for any reason up to 30 days from the delivery of your order, free of charge." },
-    { label: "100% Satisfaction",     body: "We offer 100% satisfaction policy. Please WhatsApp us on our customer service number within 24 hours and we will fix your experience. Call or WhatsApp: +968 92423242" },
+    { label: "100% Satisfaction",     body: "We offer 100% satisfaction policy. Please WhatsApp us on our customer service number within 24 hours and we will fix your experience. WhatsApp: +968 92423242 · Call: +968 24026400" },
     { label: "Tipping",               body: "There's no need to tip your delivery driver — we pay a living wage that doesn't depend on tips." },
   ];
 
@@ -1544,7 +1544,7 @@ export function ProductPageShell({
               <ul className="space-y-1.5 text-xs text-muted-foreground sm:space-y-2 sm:text-sm">
                 {(pageSettings?.supportContent
                   ? pageSettings.supportContent.split("\n").filter(Boolean)
-                  : ["Call or WhatsApp: +96892423242", "Support available 9 AM – 9 PM daily.", "Email: contactus@mls.om", "Hassle-free returns within 24 hours of delivery."]
+                  : ["WhatsApp: +968 92423242 · Call: +968 24026400", "Support available 9 AM – 9 PM daily.", "Email: contactus@mls.om", "Hassle-free returns within 24 hours of delivery."]
                 ).map((line, i) => (
                   <li key={i}><LinkifyLine text={line} /></li>
                 ))}
