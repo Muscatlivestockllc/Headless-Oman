@@ -33,6 +33,9 @@
 .bg-gradient-brand       { background-image: var(--gradient-brand); }
 .bg-gradient-brand-deep  { background-image: var(--gradient-brand-deep); }
 .bg-gradient-charcoal    { background-image: var(--gradient-charcoal); }
+.bg-gradient-footer      { background-image: var(--gradient-footer); }
+.bg-section-soft         { background-image: var(--gradient-section-soft); }
+.bg-section-dark         { background-image: var(--gradient-section-dark); }
 .text-gradient-brand {
   background-image: var(--gradient-brand-gold);
   -webkit-background-clip: text;
@@ -208,6 +211,18 @@ body.atc-expanded .richpanel-launcher {
   --gradient-brand-gold: linear-gradient(120deg, oklch(0.42 0.20 27) 0%, oklch(0.55 0.21 28) 58%, oklch(0.74 0.11 80) 135%);
   --gradient-charcoal: linear-gradient(160deg, oklch(0.22 0.02 20) 0%, oklch(0.14 0.01 25) 100%);
   --gradient-sheen: linear-gradient(180deg, oklch(1 0 0 / 0.12), transparent 45%);
+
+  /* Footer — premium dark charcoal with a soft crimson glow rising from the top-center */
+  --gradient-footer:
+    radial-gradient(95% 130% at 50% 0%, oklch(0.36 0.15 27 / 0.30) 0%, transparent 60%),
+    radial-gradient(60% 90% at 92% 8%, oklch(0.74 0.11 80 / 0.08) 0%, transparent 55%),
+    linear-gradient(178deg, oklch(0.215 0.02 25) 0%, oklch(0.125 0.008 25) 100%);
+  /* Light section wash — off-white easing into a whisper of warm crimson */
+  --gradient-section-soft: linear-gradient(180deg, oklch(0.99 0.004 80) 0%, oklch(0.965 0.015 32) 100%);
+  /* Dark section — charcoal base with a crimson glow from the top-right */
+  --gradient-section-dark:
+    radial-gradient(75% 120% at 100% 0%, oklch(0.35 0.14 27 / 0.24) 0%, transparent 55%),
+    linear-gradient(165deg, oklch(0.20 0.015 25) 0%, oklch(0.13 0.008 25) 100%);
 
   /* Semantic */
   --background: var(--off-white);

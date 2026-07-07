@@ -69,7 +69,7 @@ export function HomeReviews({ reviews, totalCount, averageRating }: HomeReviewsP
   if (!reviews.length) return null;
 
   return (
-    <section className="bg-charcoal py-3 md:py-6">
+    <section className="bg-section-dark py-3 md:py-6">
       <div className="container mx-auto px-4">
         <div className="mb-3 text-center md:mb-4">
           <div className="mb-1.5 flex items-center justify-center gap-3">

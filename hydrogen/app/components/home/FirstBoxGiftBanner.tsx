@@ -6,7 +6,7 @@ const GIFT_ITEMS = [
 
 export function FirstBoxGiftBanner() {
   return (
-    <section className="border-b border-border bg-bone py-6 md:py-8">
+    <section className="border-b border-border bg-section-soft py-6 md:py-8">
       <div className="container mx-auto px-4">
         <p className="mb-5 text-center text-[10px] font-bold uppercase tracking-[0.25em] text-crimson">
           A gift in your first box.

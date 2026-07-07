@@ -68,8 +68,9 @@ export function Footer({ settings, menuCols }: Props) {
   };
 
   return (
-    <footer className="bg-charcoal text-charcoal-foreground">
-      <div className="border-t border-off-white/20" />
+    <footer className="bg-gradient-footer text-charcoal-foreground">
+      {/* Gradient hairline accent (crimson → gold) at the very top of the footer */}
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-crimson to-transparent opacity-70" />
       <div className="container mx-auto px-4 py-12">
 
         {/* ── Desktop ─────────────────────────────────────────────── */}
