@@ -133,11 +133,10 @@ const LAYOUT_QUERY = `#graphql
   query LayoutData($language: LanguageCode, $country: CountryCode)
   @inContext(language: $language, country: $country) {
 
-    mainMenu: menu(handle: "hydrogen-desktop") {
-      items { ...MenuFields }
-    }
-
-    secondaryMenu: menu(handle: "secondary-menu") {
+    // Desktop nav = the SAME menu the live mls.om theme renders (main-menu-1), so Hydrogen
+    // mirrors live exactly (Shop Beef, Explore Meat, detailed Poultry & Camel / Value Boxes,
+    // Stores Locations, About MLS…). We split it into two rows in the loader below.
+    mainMenu: menu(handle: "main-menu-1") {
       items { ...MenuFields }
     }
 
@@ -145,7 +144,9 @@ const LAYOUT_QUERY = `#graphql
       items { ...MenuFields }
     }
 
-    mobileCategoriesMenu: menu(handle: "mls-mobile-categories") {
+    // Mobile "Categories" tab = the same live menu (main-menu-1), rendered as an accordion,
+    // so mobile matches the live site's full category structure just like desktop.
+    mobileCategoriesMenu: menu(handle: "main-menu-1") {
       items { ...MenuFields }
     }
 
@@ -430,7 +431,7 @@ function parseNavItemImages(nodes: any[]): Record<string, string> {
 const NAV_EN_HELPER_QUERY = `#graphql
   query NavEnHelper($language: LanguageCode, $country: CountryCode)
   @inContext(language: $language, country: $country) {
-    mobileCategoriesMenu: menu(handle: "mls-mobile-categories") {
+    mobileCategoriesMenu: menu(handle: "main-menu-1") {
       items { id title }
     }
     mobileMenu: menu(handle: "mls-mobile-menu") {
@@ -463,8 +464,15 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     // In Arabic, swap any image field for its `*_ar` counterpart where set (mobile banners,
     // nav images, etc.). English is untouched; empty `*_ar` falls back to the default image.
     if (language === "AR") { applyArImages(data); applyArImages(adminData); }
-    const mainMenu               = parseShopifyMenu(data?.mainMenu,              "main");
-    const secondaryMenu          = parseShopifyMenu(data?.secondaryMenu,         "secondary");
+    // Live mls.om renders main-menu-1 as one nav that wraps onto two rows (6 + 5). The Header
+    // draws two explicit rows (mainMenu = top, secondaryMenu = below), so we split the single
+    // live menu at the same point to reproduce that exact layout.
+    const desktopEntries         = parseShopifyMenu(data?.mainMenu,              "main");
+    const NAV_ROW1_COUNT = 6;
+    const mainMenu               = desktopEntries.slice(0, NAV_ROW1_COUNT);
+    const secondaryMenu          = desktopEntries
+      .slice(NAV_ROW1_COUNT)
+      .map((e) => ({ ...e, menu: "secondary" }));
     const mobileCategoriesMenu   = parseShopifyMenu(data?.mobileCategoriesMenu,  "mobile-cat");
     const footerSettings = parseFooterSettings(adminData?.footerSettings?.nodes ?? []);
     const announcementMessages = parseAnnouncementMessages(adminData?.announcementBar?.nodes ?? []);
