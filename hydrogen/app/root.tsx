@@ -318,7 +318,12 @@ function parseFreeGiftRules(nodes: any[]) {
           : "cart_total";
       return {
         variantId,
+        // Both match_titles and match_variants are newline-separated substrings (lowercased). A line
+        // item qualifies when its product title contains a matchTitles entry OR its variant title / ID
+        // matches a matchVariants entry.
         matchTitles: ((f.match_titles ?? "") as string)
+          .split("\n").map((s) => s.trim().toLowerCase()).filter(Boolean),
+        matchVariants: ((f.match_variants ?? "") as string)
           .split("\n").map((s) => s.trim().toLowerCase()).filter(Boolean),
         minSubtotal: parseFloat(f.min_subtotal ?? "0") || 0,
         subtotalScope: scope as "cart_total" | "matched_items" | "subscription_items",

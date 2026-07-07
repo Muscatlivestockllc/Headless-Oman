@@ -422,10 +422,14 @@ const EMPTY: Pick<CartStore,
 export interface FreeGiftRule {
   variantId: string;       // free product variant to add
   matchTitles: string[];   // lowercase substrings; a line-item title must CONTAIN one (OR). Empty = any item
+  matchVariants: string[]; // variant IDs (GID or numeric) / variant-title substrings; a line item with one of these ALSO qualifies (OR with titles)
   minSubtotal: number;     // 0 = no minimum
   subtotalScope: "cart_total" | "matched_items" | "subscription_items";
   requireSubscription: boolean;
 }
+
+// Compare variant IDs regardless of GID ("gid://shopify/ProductVariant/123") vs numeric ("123") form.
+const variantIdTail = (v: string) => String(v ?? "").split("/").pop() ?? "";
 
 // Set by CartDrawer on mount from the mls_free_gift_rule metaobjects.
 let _giftRules: FreeGiftRule[] = [];
@@ -507,9 +511,21 @@ async function syncFreeGifts(
     for (const rule of rules) {
       const matched = userItems.filter((i) => {
         if (rule.requireSubscription && !i.sellingPlanId) return false;
-        if (rule.matchTitles.length === 0) return true;
+        // No title AND no variant criteria → any item qualifies (existing "match any" behaviour).
+        if (rule.matchTitles.length === 0 && rule.matchVariants.length === 0) return true;
         const title = (i.product.node.title ?? "").toLowerCase();
-        return rule.matchTitles.some((t) => title.includes(t));
+        // matchTitles → product title CONTAINS.
+        const titleMatch = rule.matchTitles.some((t) => title.includes(t));
+        // matchVariants → product title OR variant title CONTAINS the entry, OR the entry is an
+        // exact variant ID (numeric). Entries are already lowercased.
+        const variantText = title + " " + (i.variantTitle ?? "").toLowerCase();
+        const vidTail = variantIdTail(i.variantId);
+        const variantMatch = rule.matchVariants.some((v) => {
+          if (variantText.includes(v)) return true;      // substring of product/variant title
+          const digits = v.replace(/\D/g, "");
+          return digits.length >= 10 && vidTail === digits; // exact variant ID (GID or numeric)
+        });
+        return titleMatch || variantMatch;
       });
       const subtotal =
         rule.subtotalScope === "subscription_items" ? subscriptionSubtotal
