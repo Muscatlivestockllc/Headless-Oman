@@ -565,25 +565,6 @@ async function seedBeefCollection() {
     { key: "message", value: "For special requests or any customization in your meat, please mention in the notes in the cart." },
   ]);
 
-  // ── Card items (from the screenshot). country_code = flag fallback until an image is uploaded.
-  //    collection = the collection handle to link (guessed from label; adjust in admin if different).
-  async function seedCards(prefix: string, cards: { label: string; collection?: string; code?: string }[]) {
-    const ids: string[] = [];
-    for (let i = 0; i < cards.length; i++) {
-      const c = cards[i];
-      const fields: { key: string; value: string }[] = [
-        { key: "name", value: `${prefix.replace(/-/g, " ")} — ${c.label}` },
-        { key: "label", value: c.label },
-      ];
-      if (c.code) fields.push({ key: "country_code", value: c.code });
-      // Seed a manual link to the collection handle (works even before a collection ref is picked).
-      if (c.collection) fields.push({ key: "link", value: `/collections/${c.collection}` });
-      const id = await upsertEntry("mls_card_item", `${prefix}-${i + 1}`, fields);
-      if (id) ids.push(id);
-    }
-    return ids;
-  }
-
   // Shop Beef by Origin — cards from the screenshot.
   const originCardIds = await seedCards(`${P}-origin-card`, [
     { label: "South African Grass-Fed Beef", collection: "south-african-grass-fed-beef", code: "za" },
@@ -1495,6 +1476,779 @@ async function seedDryAged() {
   return { pageId, pageHandle: PAGE };
 }
 
+// Seed card items for a card-grid. country_code = flag fallback until an image is uploaded;
+// collection = handle to link (seeded as a manual /collections/<h> link; adjust in admin if needed).
+async function seedCards(prefix: string, cards: { label: string; collection?: string; code?: string }[]) {
+  const ids: string[] = [];
+  for (let i = 0; i < cards.length; i++) {
+    const c = cards[i];
+    const fields: { key: string; value: string }[] = [
+      { key: "name", value: `${prefix.replace(/-/g, " ")} — ${c.label}` },
+      { key: "label", value: c.label },
+    ];
+    if (c.code) fields.push({ key: "country_code", value: c.code });
+    if (c.collection) fields.push({ key: "link", value: `/collections/${c.collection}` });
+    const id = await upsertEntry("mls_card_item", `${prefix}-${i + 1}`, fields);
+    if (id) ids.push(id);
+  }
+  return ids;
+}
+
+// ── Page 10: Lamb & Mutton Collection ─────────────────────────────────────────
+async function seedLambCollection() {
+  const P = "lamb-collection";
+  const PAGE = "lamb-sub-collection";
+  console.log(`\n=== Seeding page: ${PAGE} ===`);
+  await ensurePage(PAGE, "Lamb Collection");
+
+  const heroId = await upsertEntry("mls_section_hero", `${P}-hero`, [
+    { key: "name", value: "Lamb — Hero" },
+    { key: "heading", value: "Experience the World's Finest MLS Lamb & Mutton Selection!" },
+    { key: "subheading", value: "Fresh Mishkak offers starting from just 3.45 OMR!" },
+    { key: "button_text", value: "Shop Now" },
+    { key: "button_url", value: "#products" },
+    { key: "strip_text", value: "We offer 100% free replacements and free returns." },
+  ]);
+
+  const iconIds: string[] = [];
+  for (const it of [
+    { h: `${P}-icon-delivery`, name: "Lamb — Icon: Fresh Delivery", heading: "1HR FRESH DELIVERY" },
+    { h: `${P}-icon-box`, name: "Lamb — Icon: Delivered in Fresh Box", heading: "DELIVERED IN FRESH BOX" },
+    { h: `${P}-icon-halal`, name: "Lamb — Icon: Fresh & Halal", heading: "FRESH & HALAL" },
+  ]) {
+    const id = await upsertEntry("mls_icon_item", it.h, [{ key: "name", value: it.name }, { key: "heading", value: it.heading }]);
+    if (id) iconIds.push(id);
+  }
+  const iconsId = await upsertEntry("mls_section_icons", `${P}-icons`, [
+    { key: "name", value: "Lamb — MLS Experience Icons" },
+    { key: "heading", value: "THE MLS EXPERIENCE" },
+    { key: "items", value: JSON.stringify(iconIds) },
+  ]);
+
+  const messageId = await upsertEntry("mls_section_message", `${P}-message`, [
+    { key: "name", value: "Lamb — Custom Requests Strip" },
+    { key: "message", value: "For special requests or any customization in your meat, please mention in the notes in the cart." },
+  ]);
+
+  // Reels (video showcase) — empty; upload in admin
+  const reelsId = await upsertEntry("mls_section_reels", `${P}-reels`, [
+    { key: "name", value: "Lamb — Reels" },
+    { key: "heading", value: "MLS Reels" },
+    { key: "eyebrow", value: "Watch & Shop" },
+    { key: "reels", value: JSON.stringify([]) },
+  ]);
+
+  // Shop Lamb by Origin
+  const originCardIds = await seedCards(`${P}-origin-card`, [
+    { label: "Australian Mutton", collection: "fresh-australian-mutton", code: "au" },
+    { label: "Australian Grass-Fed Lamb", collection: "australian-grass-fed-lamb", code: "au" },
+    { label: "Freshly Slaughtered Australian Lamb", collection: "australian-grass-fed-lamb", code: "au" },
+    { label: "New Zealand Grass-Fed Lamb", collection: "new-zealand-grass-fed-lamb", code: "nz" },
+    { label: "Fresh Somali Lamb", collection: "somali-lamb", code: "so" },
+    { label: "Fresh Pakistani Mutton", collection: "fresh-pakistani-mutton", code: "pk" },
+    { label: "Fresh Indian Mutton", collection: "fresh-indian-mutton", code: "in" },
+    { label: "Freshly Slaughtered Local Omani Lamb", collection: "bushra-lamb", code: "om" },
+  ]);
+  const originGridId = await upsertEntry("mls_section_card_grid", `${P}-origin-grid`, [
+    { key: "name", value: "Lamb — Shop Lamb by Origin" },
+    { key: "heading", value: "SHOP LAMB BY ORIGIN" },
+    { key: "cards", value: JSON.stringify(originCardIds) },
+  ]);
+
+  // Shop Lamb by Cut
+  const cutCardIds = await seedCards(`${P}-cut-card`, [
+    { label: "Lamb Boneless Cubes", collection: "boneless-cubes" },
+    { label: "Lamb Bone-In Cubes", collection: "bone-in-cubes" },
+    { label: "Lamb Mince", collection: "mince" },
+    { label: "Lamb Chops", collection: "chops" },
+    { label: "Lamb Ribs", collection: "all-lamb" },
+    { label: "Lamb Burgers", collection: "burgers" },
+    { label: "Lamb Mishkak & Fondue", collection: "mishkak-and-fondue" },
+    { label: "Lamb Shanks", collection: "all-lamb" },
+    { label: "Whole Carcass", collection: "whole-carcass" },
+    { label: "Seasoned Lamb", collection: "all-lamb" },
+    { label: "Sausages", collection: "all-lamb" },
+  ]);
+  const cutGridId = await upsertEntry("mls_section_card_grid", `${P}-cut-grid`, [
+    { key: "name", value: "Lamb — Shop Lamb by Cut" },
+    { key: "heading", value: "SHOP LAMB BY CUT" },
+    { key: "cards", value: JSON.stringify(cutCardIds) },
+  ]);
+
+  // Featured collection carousel
+  const gid = await collGid("all-lamb");
+  const carFields: { key: string; value: string }[] = [
+    { key: "name", value: "Lamb — Featured Collection" },
+    { key: "heading", value: "Featured collection" },
+    { key: "layout", value: "carousel" },
+    { key: "show_view_all", value: "true" },
+    { key: "max_products", value: "12" },
+  ];
+  if (gid) carFields.push({ key: "collection", value: gid });
+  const carouselId = await upsertEntry("mls_section_product_carousel", `${P}-featured`, carFields);
+
+  const sectionIds = [heroId, iconsId, messageId, reelsId, originGridId, cutGridId, carouselId].filter(Boolean) as string[];
+
+  const pageId = await upsertEntry("mls_landing_page", `${P}-page`, [
+    { key: "name", value: "Lamb & Mutton Collection (Landing Page)" },
+    { key: "handle_label", value: PAGE },
+    { key: "seo_title", value: "Lamb & Mutton Collection — MLS Oman" },
+    { key: "seo_description", value: "The world's finest lamb & mutton, by origin and cut. Fresh Mishkak from 3.45 OMR, delivered fresh in Oman." },
+    { key: "sections", value: JSON.stringify(sectionIds) },
+  ]);
+
+  return { pageId, pageHandle: PAGE };
+}
+
+// ── Page 17: Signature Box ────────────────────────────────────────────────────
+async function seedSignatureBox() {
+  const P = "signature-box";
+  const PAGE = "signature-box";
+  console.log(`\n=== Seeding page: ${PAGE} ===`);
+  await ensurePage(PAGE, "Signature Box");
+
+  const heroId = await upsertEntry("mls_section_hero", `${P}-hero`, [
+    { key: "name", value: "Signature Box — Hero" },
+    { key: "heading", value: "A fun way to get all the compliments" },
+    { key: "subheading", value: "Peace of mind that you will host the best barbecue ever! Delivered fresh in 1 hour." },
+    { key: "button_text", value: "Shop Signature Box" },
+    { key: "button_url", value: "#products" },
+    { key: "strip_text", value: "We offer 100% free replacements and free returns." },
+  ]);
+
+  const iconIds: string[] = [];
+  for (const it of [
+    { h: `${P}-icon-delivery`, name: "Signature Box — Icon: Fresh Delivery", heading: "1HR FRESH DELIVERY" },
+    { h: `${P}-icon-box`, name: "Signature Box — Icon: Delivered in Fresh Box", heading: "DELIVERED IN FRESH BOX" },
+    { h: `${P}-icon-halal`, name: "Signature Box — Icon: Fresh & Halal", heading: "FRESH & HALAL" },
+  ]) {
+    const id = await upsertEntry("mls_icon_item", it.h, [{ key: "name", value: it.name }, { key: "heading", value: it.heading }]);
+    if (id) iconIds.push(id);
+  }
+  const iconsId = await upsertEntry("mls_section_icons", `${P}-icons`, [
+    { key: "name", value: "Signature Box — MLS Experience Icons" },
+    { key: "heading", value: "THE MLS EXPERIENCE" },
+    { key: "items", value: JSON.stringify(iconIds) },
+  ]);
+
+  const messageId = await upsertEntry("mls_section_message", `${P}-message`, [
+    { key: "name", value: "Signature Box — Custom Requests Strip" },
+    { key: "message", value: "For special requests or any customization in your meat, please mention in the notes in the cart." },
+  ]);
+
+  const reelsId = await upsertEntry("mls_section_reels", `${P}-reels`, [
+    { key: "name", value: "Signature Box — MLS Experience Reels" },
+    { key: "heading", value: "MLS Experience" },
+    { key: "eyebrow", value: "Watch & Shop" },
+    { key: "reels", value: JSON.stringify([]) },
+  ]);
+
+  // Benefits you will get — plain feature panel
+  const pointIds: string[] = [];
+  for (const pt of [
+    { h: `${P}-pt-1`, body: "It contains fresh & 100% Halal meat. Mishkak, chops, steaks and chicken - it's the most perfect barbecue box." },
+    { h: `${P}-pt-2`, body: "Fresh Australian lamb chops and mishkak for the beautiful barbecue experience." },
+    { h: `${P}-pt-3`, body: "Fresh prime cuts of grass-fed beef for the perfect steak gathering." },
+    { h: `${P}-pt-4`, body: "Everyday use fresh chicken main cuts." },
+    { h: `${P}-pt-5`, body: "You save a fortune on your barbecue meat purchase and host the best party ever." },
+  ]) {
+    const id = await upsertEntry("mls_panel_point", pt.h, [{ key: "name", value: `Signature Box — Benefit ${pt.h}` }, { key: "body", value: pt.body }]);
+    if (id) pointIds.push(id);
+  }
+  const benefitsId = await upsertEntry("mls_section_feature_panel", `${P}-benefits`, [
+    { key: "name", value: "Signature Box — Benefits You Will Get" },
+    { key: "variant", value: "plain" },
+    { key: "heading", value: "Benefits you will get" },
+    { key: "intro", value: "This box is curated with the finest meat collection." },
+    { key: "points", value: JSON.stringify(pointIds) },
+  ]);
+
+  // 2 products: main box (tinted bg) + a 2nd box (plain bg). Swap the 2nd handle in admin as needed.
+  const prodGids = await productGids(["mls-signature-box-12kg", "mls-eid-barbeque-box-4kg"]);
+  const featuredId = await upsertEntry("mls_section_featured_products", `${P}-featured`, [
+    { key: "name", value: "Signature Box — MLS Signature Box 12kg" },
+    { key: "products", value: JSON.stringify(prodGids) },
+  ]);
+
+  const reviewsId = await seedReviewsSection(P, "Signature Box");
+
+  const sectionIds = [heroId, iconsId, messageId, reelsId, benefitsId, featuredId, reviewsId].filter(Boolean) as string[];
+
+  const pageId = await upsertEntry("mls_landing_page", `${P}-page`, [
+    { key: "name", value: "Signature Box (Landing Page)" },
+    { key: "handle_label", value: PAGE },
+    { key: "seo_title", value: "MLS Signature Box — A Fun Way to Get All the Compliments — MLS Oman" },
+    { key: "seo_description", value: "Host the best barbecue ever. The MLS Signature Box: premium lamb, beef & chicken curated for the perfect gathering, delivered fresh in Oman." },
+    { key: "sections", value: JSON.stringify(sectionIds) },
+  ]);
+
+  return { pageId, pageHandle: PAGE };
+}
+
+// ── Page 16: Prime Box ────────────────────────────────────────────────────────
+async function seedPrimeBox() {
+  const P = "prime-box";
+  const PAGE = "prime-box";
+  console.log(`\n=== Seeding page: ${PAGE} ===`);
+  await ensurePage(PAGE, "Prime Box");
+
+  const heroId = await upsertEntry("mls_section_hero", `${P}-hero`, [
+    { key: "name", value: "Prime Box — Hero" },
+    { key: "heading", value: "A box which completes a home" },
+    { key: "subheading", value: "A meat box for everyday meals or a party, the decision is yours!" },
+    { key: "button_text", value: "Shop Prime Box" },
+    { key: "button_url", value: "#products" },
+    { key: "strip_text", value: "We offer 100% free replacements and free returns." },
+  ]);
+
+  const iconIds: string[] = [];
+  for (const it of [
+    { h: `${P}-icon-delivery`, name: "Prime Box — Icon: Fresh Delivery", heading: "1HR FRESH DELIVERY" },
+    { h: `${P}-icon-box`, name: "Prime Box — Icon: Delivered in Fresh Box", heading: "DELIVERED IN FRESH BOX" },
+    { h: `${P}-icon-halal`, name: "Prime Box — Icon: Fresh & Halal", heading: "FRESH & HALAL" },
+  ]) {
+    const id = await upsertEntry("mls_icon_item", it.h, [{ key: "name", value: it.name }, { key: "heading", value: it.heading }]);
+    if (id) iconIds.push(id);
+  }
+  const iconsId = await upsertEntry("mls_section_icons", `${P}-icons`, [
+    { key: "name", value: "Prime Box — MLS Experience Icons" },
+    { key: "heading", value: "THE MLS EXPERIENCE" },
+    { key: "items", value: JSON.stringify(iconIds) },
+  ]);
+
+  const messageId = await upsertEntry("mls_section_message", `${P}-message`, [
+    { key: "name", value: "Prime Box — Custom Requests Strip" },
+    { key: "message", value: "For special requests or any customization in your meat, please mention in the notes in the cart." },
+  ]);
+
+  const reelsId = await upsertEntry("mls_section_reels", `${P}-reels`, [
+    { key: "name", value: "Prime Box — MLS Experience Reels" },
+    { key: "heading", value: "MLS Experience" },
+    { key: "eyebrow", value: "Watch & Shop" },
+    { key: "reels", value: JSON.stringify([]) },
+  ]);
+
+  // Benefits you will get — plain feature panel (image + green-check bullet list)
+  const pointIds: string[] = [];
+  for (const pt of [
+    { h: `${P}-pt-1`, body: "It contains fresh & 100% Halal meat." },
+    { h: `${P}-pt-2`, body: "All prime fresh beef steaks in one box." },
+    { h: `${P}-pt-3`, body: "Everyday use fresh chicken main cuts in this box." },
+    { h: `${P}-pt-4`, body: "You save a fortune on your meat purchases and daily meals because of this box." },
+    { h: `${P}-pt-5`, body: "Beef Burgers and mince, top quality grass-fed beef included." },
+  ]) {
+    const id = await upsertEntry("mls_panel_point", pt.h, [{ key: "name", value: `Prime Box — Benefit ${pt.h}` }, { key: "body", value: pt.body }]);
+    if (id) pointIds.push(id);
+  }
+  const benefitsId = await upsertEntry("mls_section_feature_panel", `${P}-benefits`, [
+    { key: "name", value: "Prime Box — Benefits You Will Get" },
+    { key: "variant", value: "plain" },
+    { key: "heading", value: "Benefits you will get" },
+    { key: "intro", value: "This box is curated with the finest meat collection." },
+    { key: "points", value: JSON.stringify(pointIds) },
+  ]);
+
+  // Featured product — MLS Prime Box 10kg (single product; description = "THE BOX CONTAINS")
+  // 2 products: main box (tinted bg) + a 2nd box (plain bg). Swap the 2nd handle in admin as needed.
+  const prodGids = await productGids(["mls-prime-box-10kg", "mls-ramadan-box-4-5-kg"]);
+  const featuredId = await upsertEntry("mls_section_featured_products", `${P}-featured`, [
+    { key: "name", value: "Prime Box — MLS Prime Box 10kg" },
+    { key: "products", value: JSON.stringify(prodGids) },
+  ]);
+
+  const reviewsId = await seedReviewsSection(P, "Prime Box");
+
+  const sectionIds = [heroId, iconsId, messageId, reelsId, benefitsId, featuredId, reviewsId].filter(Boolean) as string[];
+
+  const pageId = await upsertEntry("mls_landing_page", `${P}-page`, [
+    { key: "name", value: "Prime Box (Landing Page)" },
+    { key: "handle_label", value: PAGE },
+    { key: "seo_title", value: "MLS Prime Box — A Box Which Completes a Home — MLS Oman" },
+    { key: "seo_description", value: "A meat box for everyday meals or a party. The MLS Prime Box: fresh, Halal beef & chicken curated in one box, delivered fresh in Oman." },
+    { key: "sections", value: JSON.stringify(sectionIds) },
+  ]);
+
+  return { pageId, pageHandle: PAGE };
+}
+
+// ── Page 15: NOMU Collection (spices/rubs collab) ─────────────────────────────
+async function seedNomu() {
+  const P = "nomu";
+  const PAGE = "nomu";
+  console.log(`\n=== Seeding page: ${PAGE} ===`);
+  await ensurePage(PAGE, "Nomu");
+
+  const heroId = await upsertEntry("mls_section_hero", `${P}-hero`, [
+    { key: "name", value: "Nomu — Hero" },
+    { key: "heading", value: "MLS x Nomu" },
+    { key: "subheading", value: "Adding More Flavor to Our Fresh Meat" },
+    { key: "button_text", value: "Shop Now" },
+    { key: "button_url", value: "#products" },
+    { key: "strip_text", value: "For special requests or any customization in your meat, please mention in the notes in the cart." },
+  ]);
+
+  const iconIds: string[] = [];
+  for (const it of [
+    { h: `${P}-icon-delivery`, name: "Nomu — Icon: Fresh Delivery", heading: "1HR FRESH DELIVERY" },
+    { h: `${P}-icon-box`, name: "Nomu — Icon: Delivered in Fresh Box", heading: "DELIVERED IN FRESH BOX" },
+    { h: `${P}-icon-hormone`, name: "Nomu — Icon: Hormones Free", heading: "HORMONES FREE" },
+    { h: `${P}-icon-halal`, name: "Nomu — Icon: Fresh & Halal", heading: "FRESH & HALAL" },
+  ]) {
+    const id = await upsertEntry("mls_icon_item", it.h, [{ key: "name", value: it.name }, { key: "heading", value: it.heading }]);
+    if (id) iconIds.push(id);
+  }
+  const iconsId = await upsertEntry("mls_section_icons", `${P}-icons`, [
+    { key: "name", value: "Nomu — MLS Experience Icons" },
+    { key: "heading", value: "THE MLS EXPERIENCE" },
+    { key: "items", value: JSON.stringify(iconIds) },
+  ]);
+
+  // What is Nomu? — plain feature panel (image + text + View Collection)
+  const whatId = await upsertEntry("mls_section_feature_panel", `${P}-what`, [
+    { key: "name", value: "Nomu — What is Nomu?" },
+    { key: "variant", value: "plain" },
+    { key: "heading", value: "WHAT IS NOMU?" },
+    { key: "intro", value: "Nomu are one of SA's leading, independent food innovators. Their ever-expanding and award-winning range of quality spices & rubs collection is now available at MLS to add more flavor to our fresh meat." },
+    { key: "button_text", value: "View Collection" },
+    { key: "button_url", value: "/collections/rubs-and-grinders" },
+  ]);
+
+  const bannerId = await upsertEntry("mls_section_message", `${P}-banner`, [
+    { key: "name", value: "Nomu — NOMU WITH MLS MEAT Banner" },
+    { key: "message", value: "NOMU WITH MLS MEAT" },
+  ]);
+
+  // Media showcase — NOMU Rubs & Grinders / gift boxes (3 images)
+  const mediaIds: string[] = [];
+  for (const m of [
+    { h: `${P}-media-1`, name: "Nomu — Rubs & Grinders" },
+    { h: `${P}-media-2`, name: "Nomu — For your MLS meat" },
+    { h: `${P}-media-3`, name: "Nomu — Gift boxes" },
+  ]) {
+    const id = await upsertEntry("mls_media_item", m.h, [{ key: "name", value: m.name }]);
+    if (id) mediaIds.push(id);
+  }
+  const showcaseId = await upsertEntry("mls_section_media_showcase", `${P}-showcase`, [
+    { key: "name", value: "Nomu — NOMU with MLS Meat Showcase" },
+    { key: "items", value: JSON.stringify(mediaIds) },
+  ]);
+
+  const reviewsId = await seedReviewsSection(P, "Nomu");
+
+  // Product grid — Must-haves for delicious meals
+  const gid = await collGid("rubs-and-grinders");
+  const gridFields: { key: string; value: string }[] = [
+    { key: "name", value: "Nomu — Must-haves for Delicious Meals" },
+    { key: "heading", value: "Must-haves for delicious meals" },
+    { key: "layout", value: "grid" },
+    { key: "max_products", value: "24" },
+    { key: "show_view_all", value: "true" },
+  ];
+  if (gid) gridFields.push({ key: "collection", value: gid });
+  const gridId = await upsertEntry("mls_section_product_carousel", `${P}-grid`, gridFields);
+
+  // Card grid (overlay) — Nomu Collection: Rubs / Grinders / Gift Boxes
+  const cardIds: string[] = [];
+  for (const c of [
+    { h: `${P}-card-rubs`, label: "Nomu Rubs", coll: "nomu-rubs" },
+    { h: `${P}-card-grinders`, label: "Nomu Grinders", coll: "nomu-grinders" },
+    { h: `${P}-card-gift`, label: "Nomu Gift Boxes", coll: "nomu-gift-box" },
+  ]) {
+    const id = await upsertEntry("mls_card_item", c.h, [
+      { key: "name", value: `Nomu — Card: ${c.label}` },
+      { key: "label", value: c.label },
+      { key: "link", value: `/collections/${c.coll}` },
+      { key: "button_text", value: "View Collection" },
+    ]);
+    if (id) cardIds.push(id);
+  }
+  const cardGridId = await upsertEntry("mls_section_card_grid", `${P}-collection-cards`, [
+    { key: "name", value: "Nomu — Nomu Collection Cards" },
+    { key: "heading", value: "Nomu Collection" },
+    { key: "eyebrow", value: "Elevate your dining experience with NOMU's exquisite range of spices, seasonings, and the essence of Giftyness, now within arm's reach at MLS." },
+    { key: "style", value: "overlay" },
+    { key: "cards", value: JSON.stringify(cardIds) },
+  ]);
+
+  const sectionIds = [heroId, iconsId, whatId, bannerId, showcaseId, reviewsId, gridId, cardGridId].filter(Boolean) as string[];
+
+  const pageId = await upsertEntry("mls_landing_page", `${P}-page`, [
+    { key: "name", value: "NOMU Collection (Landing Page)" },
+    { key: "handle_label", value: PAGE },
+    { key: "seo_title", value: "MLS x Nomu — Spices, Rubs & Grinders — MLS Oman" },
+    { key: "seo_description", value: "MLS x Nomu. Award-winning South African spices, rubs & grinders to add more flavor to your fresh MLS meat. Now in Oman." },
+    { key: "sections", value: JSON.stringify(sectionIds) },
+  ]);
+
+  return { pageId, pageHandle: PAGE };
+}
+
+// ── Page 14: Fresh Poultry / Chicken Collection ───────────────────────────────
+async function seedPoultry() {
+  const P = "poultry";
+  const PAGE = "fresh-poultry";
+  const COLL = "mls-fresh-poultry";
+  console.log(`\n=== Seeding page: ${PAGE} ===`);
+  await ensurePage(PAGE, "Fresh Poultry");
+
+  const heroId = await upsertEntry("mls_section_hero", `${P}-hero`, [
+    { key: "name", value: "Poultry — Hero" },
+    { key: "heading", value: "Buying fresh chicken in Oman is easy now." },
+    { key: "subheading", value: "Delivered Fresh Within 1 Hour" },
+    { key: "button_text", value: "Shop Now" },
+    { key: "button_url", value: "#products" },
+    { key: "strip_text", value: "For special requests or any customization in your meat, please mention in the notes in the cart." },
+  ]);
+
+  const iconIds: string[] = [];
+  for (const it of [
+    { h: `${P}-icon-delivery`, name: "Poultry — Icon: Fresh Delivery", heading: "1HR FRESH DELIVERY" },
+    { h: `${P}-icon-box`, name: "Poultry — Icon: Delivered in Fresh Box", heading: "DELIVERED IN FRESH BOX" },
+    { h: `${P}-icon-hormone`, name: "Poultry — Icon: Hormones Free", heading: "HORMONES FREE" },
+    { h: `${P}-icon-halal`, name: "Poultry — Icon: Fresh & Halal", heading: "FRESH & HALAL" },
+  ]) {
+    const id = await upsertEntry("mls_icon_item", it.h, [{ key: "name", value: it.name }, { key: "heading", value: it.heading }]);
+    if (id) iconIds.push(id);
+  }
+  const iconsId = await upsertEntry("mls_section_icons", `${P}-icons`, [
+    { key: "name", value: "Poultry — MLS Experience Icons" },
+    { key: "heading", value: "THE MLS EXPERIENCE" },
+    { key: "items", value: JSON.stringify(iconIds) },
+  ]);
+
+  const reviewsId = await seedReviewsSection(P, "Poultry");
+
+  const promoId = await upsertEntry("mls_section_promo_banner", `${P}-promo`, [
+    { key: "name", value: "Poultry — Source of Protein Promo" },
+    { key: "heading", value: "Have a look at your source of protein" },
+    { key: "button_text", value: "Watch How We Pack It" },
+    { key: "button_url", value: "#products" },
+  ]);
+
+  const gid = await collGid(COLL);
+  const gridFields: { key: string; value: string }[] = [
+    { key: "name", value: "Poultry — Fresh Poultry Collection" },
+    { key: "heading", value: "Fresh poultry collection" },
+    { key: "layout", value: "grid" },
+    { key: "max_products", value: "48" },
+    { key: "show_view_all", value: "true" },
+  ];
+  if (gid) gridFields.push({ key: "collection", value: gid });
+  const gridId = await upsertEntry("mls_section_product_carousel", `${P}-grid`, gridFields);
+
+  const mediaIds: string[] = [];
+  for (const m of [
+    { h: `${P}-media-1`, name: "Poultry — Feast 1" },
+    { h: `${P}-media-2`, name: "Poultry — Feast 2" },
+  ]) {
+    const id = await upsertEntry("mls_media_item", m.h, [{ key: "name", value: m.name }]);
+    if (id) mediaIds.push(id);
+  }
+  const showcaseId = await upsertEntry("mls_section_media_showcase", `${P}-showcase`, [
+    { key: "name", value: "Poultry — Feast Your Eyes" },
+    { key: "heading", value: "Feast your eyes with fresh protein" },
+    { key: "items", value: JSON.stringify(mediaIds) },
+  ]);
+
+  const sectionIds = [heroId, iconsId, reviewsId, promoId, gridId, showcaseId].filter(Boolean) as string[];
+
+  const pageId = await upsertEntry("mls_landing_page", `${P}-page`, [
+    { key: "name", value: "Fresh Poultry / Chicken (Landing Page)" },
+    { key: "handle_label", value: PAGE },
+    { key: "seo_title", value: "Buying Fresh Chicken in Oman — MLS Oman" },
+    { key: "seo_description", value: "Buying fresh chicken in Oman is easy now. Fresh, hormone-free poultry delivered fresh in Oman." },
+    { key: "sections", value: JSON.stringify(sectionIds) },
+  ]);
+
+  return { pageId, pageHandle: PAGE };
+}
+
+// ── Page 13: Mishkak Collection ───────────────────────────────────────────────
+async function seedMishkak() {
+  const P = "mishkak";
+  const PAGE = "mls-mishkak";
+  console.log(`\n=== Seeding page: ${PAGE} ===`);
+  await ensurePage(PAGE, "MLS Mishkak");
+
+  const heroId = await upsertEntry("mls_section_hero", `${P}-hero`, [
+    { key: "name", value: "Mishkak — Hero" },
+    { key: "heading", value: "Make the Most Perfect Mishkak at Home" },
+    { key: "subheading", value: "Choose your fresh mishkak: cubes or skewered, seasoned or unseasoned, your decision!" },
+    { key: "button_text", value: "Shop Mishkak" },
+    { key: "button_url", value: "#products" },
+    { key: "strip_text", value: "We offer 100% free replacements and free returns." },
+  ]);
+
+  const iconIds: string[] = [];
+  for (const it of [
+    { h: `${P}-icon-delivery`, name: "Mishkak — Icon: Fresh Delivery", heading: "1HR FRESH DELIVERY" },
+    { h: `${P}-icon-box`, name: "Mishkak — Icon: Delivered in Fresh Box", heading: "DELIVERED IN FRESH BOX" },
+    { h: `${P}-icon-halal`, name: "Mishkak — Icon: Fresh & Halal", heading: "FRESH & HALAL" },
+  ]) {
+    const id = await upsertEntry("mls_icon_item", it.h, [{ key: "name", value: it.name }, { key: "heading", value: it.heading }]);
+    if (id) iconIds.push(id);
+  }
+  const iconsId = await upsertEntry("mls_section_icons", `${P}-icons`, [
+    { key: "name", value: "Mishkak — MLS Experience Icons" },
+    { key: "heading", value: "THE MLS EXPERIENCE" },
+    { key: "items", value: JSON.stringify(iconIds) },
+  ]);
+
+  const messageId = await upsertEntry("mls_section_message", `${P}-message`, [
+    { key: "name", value: "Mishkak — Custom Requests Strip" },
+    { key: "message", value: "For special requests or any customization in your meat, please mention in the notes in the cart." },
+  ]);
+
+  // Feature panel (plain) — Whichever mishkak you want
+  const pointIds: string[] = [];
+  for (const pt of [
+    { h: `${P}-pt-1`, body: "Fresh, ready, raw, or seasoned, in skewers or without skewers." },
+    { h: `${P}-pt-2`, body: "Beef, Mutton, Lamb, Camel, and Chicken Mishkak." },
+    { h: `${P}-pt-3`, body: "Save yourself from being stuck in long queues." },
+    { h: `${P}-pt-4`, body: "We deliver within the same-day across Oman." },
+  ]) {
+    const id = await upsertEntry("mls_panel_point", pt.h, [{ key: "name", value: `Mishkak — Point ${pt.h}` }, { key: "body", value: pt.body }]);
+    if (id) pointIds.push(id);
+  }
+  const panelId = await upsertEntry("mls_section_feature_panel", `${P}-mishkak-panel`, [
+    { key: "name", value: "Mishkak — Whichever Mishkak You Want" },
+    { key: "heading", value: "Whichever mishkak you want, we have them all." },
+    { key: "variant", value: "plain" },
+    { key: "points", value: JSON.stringify(pointIds) },
+  ]);
+
+  const reviewsId = await seedReviewsSection(P, "Mishkak");
+
+  // Two product carousels
+  const carouselIds: string[] = [];
+  for (const c of [
+    { h: `${P}-carousel-1`, heading: "Explore our one-in-all MLS Mishkak Collection", coll: "mishkak-and-fondue" },
+    { h: `${P}-carousel-2`, heading: "Mishkak Barbecue Cubes", coll: "fondue-mishkak" },
+  ]) {
+    const gid = await collGid(c.coll);
+    const fields: { key: string; value: string }[] = [
+      { key: "name", value: `Mishkak — Carousel: ${c.heading}` },
+      { key: "heading", value: c.heading },
+      { key: "layout", value: "carousel" },
+      { key: "max_products", value: "12" },
+      { key: "show_view_all", value: "true" },
+    ];
+    if (gid) fields.push({ key: "collection", value: gid });
+    const id = await upsertEntry("mls_section_product_carousel", c.h, fields);
+    if (id) carouselIds.push(id);
+  }
+
+  const sectionIds = [heroId, iconsId, messageId, panelId, reviewsId, ...carouselIds].filter(Boolean) as string[];
+
+  const pageId = await upsertEntry("mls_landing_page", `${P}-page`, [
+    { key: "name", value: "Mishkak Collection (Landing Page)" },
+    { key: "handle_label", value: PAGE },
+    { key: "seo_title", value: "Make the Most Perfect Mishkak at Home — MLS Oman" },
+    { key: "seo_description", value: "Fresh mishkak — cubes or skewered, seasoned or unseasoned. Beef, mutton, lamb, camel & chicken mishkak, delivered fresh in Oman." },
+    { key: "sections", value: JSON.stringify(sectionIds) },
+  ]);
+
+  return { pageId, pageHandle: PAGE };
+}
+
+// ── Page 12: Whole Lamb / Carcass Collection ──────────────────────────────────
+async function seedWholeCarcass() {
+  const P = "whole-carcass";
+  const PAGE = "whole-carcass";
+  console.log(`\n=== Seeding page: ${PAGE} ===`);
+  await ensurePage(PAGE, "Whole Carcass");
+
+  const heroId = await upsertEntry("mls_section_hero", `${P}-hero`, [
+    { key: "name", value: "Whole Carcass — Hero" },
+    { key: "heading", value: "Fresh, Fast & Convenient" },
+    { key: "subheading", value: "Your Whole Lamb shopping upgraded" },
+    { key: "button_text", value: "Shop Now" },
+    { key: "button_url", value: "#products" },
+    { key: "strip_text", value: "Absolutely FREE - 500gm packet of Mince from fresh grass-fed New Zealand beef!" },
+  ]);
+
+  const iconIds: string[] = [];
+  for (const it of [
+    { h: `${P}-icon-delivery`, name: "Whole Carcass — Icon: Fresh Delivery", heading: "1HR FRESH DELIVERY" },
+    { h: `${P}-icon-box`, name: "Whole Carcass — Icon: Delivered in Fresh Box", heading: "DELIVERED IN FRESH BOX" },
+    { h: `${P}-icon-hormone`, name: "Whole Carcass — Icon: Hormones Free", heading: "HORMONES FREE" },
+    { h: `${P}-icon-halal`, name: "Whole Carcass — Icon: Fresh & Halal", heading: "FRESH & HALAL" },
+  ]) {
+    const id = await upsertEntry("mls_icon_item", it.h, [{ key: "name", value: it.name }, { key: "heading", value: it.heading }]);
+    if (id) iconIds.push(id);
+  }
+  const iconsId = await upsertEntry("mls_section_icons", `${P}-icons`, [
+    { key: "name", value: "Whole Carcass — MLS Experience Icons" },
+    { key: "heading", value: "THE MLS EXPERIENCE" },
+    { key: "items", value: JSON.stringify(iconIds) },
+  ]);
+
+  const messageId = await upsertEntry("mls_section_message", `${P}-message`, [
+    { key: "name", value: "Whole Carcass — Custom Requests Strip" },
+    { key: "message", value: "For special requests or any customization in your meat, please mention in the notes in the cart." },
+  ]);
+
+  const reviewsId = await seedReviewsSection(P, "Whole Carcass");
+
+  const reelsId = await upsertEntry("mls_section_reels", `${P}-reels`, [
+    { key: "name", value: "Whole Carcass — Reels" },
+    { key: "heading", value: "Watch how we prepare your meat box" },
+    { key: "eyebrow", value: "Watch & Shop" },
+    { key: "reels", value: JSON.stringify([]) },
+  ]);
+
+  // Feature cards — Matchless Quality and Fine Cuts (4)
+  const featIds: string[] = [];
+  for (const f of [
+    { h: `${P}-feat-1`, title: "Grass-Fed", body: "Goats and Lambs raised in Snofarholde." },
+    { h: `${P}-feat-2`, title: "Locally Sourced", body: "Locally grass-fed in Oman." },
+    { h: `${P}-feat-3`, title: "Complete Box", body: "The meat box will include liver and kidney (excluding head and trotters)." },
+    { h: `${P}-feat-4`, title: "Generous Weight", body: "Somali whole carcass weighs 9-12kg, and Indian whole carcass weighs 9-12kg." },
+  ]) {
+    const id = await upsertEntry("mls_feature_item", f.h, [{ key: "name", value: `Whole Carcass — Feature: ${f.title}` }, { key: "heading", value: f.title }, { key: "body", value: f.body }]);
+    if (id) featIds.push(id);
+  }
+  const featuresId = await upsertEntry("mls_section_feature_cards", `${P}-features`, [
+    { key: "name", value: "Whole Carcass — Matchless Quality and Fine Cuts" },
+    { key: "heading", value: "Matchless Quality and Fine Cuts" },
+    { key: "items", value: JSON.stringify(featIds) },
+  ]);
+
+  // Available Cuts Options — crimson feature panel (banner) + a circle card grid of cut options
+  const cutPanelId = await upsertEntry("mls_section_feature_panel", `${P}-cuts-panel`, [
+    { key: "name", value: "Whole Carcass — Available Cuts Options (banner)" },
+    { key: "heading", value: "Available Cuts Options" },
+  ]);
+  const cutCardIds = await seedCards(`${P}-cut-card`, [
+    { label: "Whole Carcass", collection: "whole-carcass" },
+    { label: "Half Carcass", collection: "whole-carcass" },
+    { label: "6-way Cut", collection: "whole-carcass" },
+    { label: "Bone-in Cubes", collection: "bone-in-cubes" },
+  ]);
+  const cutGridId = await upsertEntry("mls_section_card_grid", `${P}-cut-grid`, [
+    { key: "name", value: "Whole Carcass — Cut Options Cards" },
+    { key: "cards", value: JSON.stringify(cutCardIds) },
+  ]);
+
+  // Featured products — MLS Farm Fresh Collection (carcass products)
+  const prodGids = await productGids([
+    "ind-mutton-whole-carcass-9-kg",
+    "somali-lamb-in-a-box-whole-carcass-11-kg",
+    "somali-lamb-in-a-box-whole-carcass-9-kg",
+    "somali-goat-in-a-box-whole-carcass-11kg",
+    "australian-lamb-in-a-box-whole-carcass-18-kg",
+  ]);
+  const featuredId = await upsertEntry("mls_section_featured_products", `${P}-featured`, [
+    { key: "name", value: "Whole Carcass — MLS Farm Fresh Collection" },
+    { key: "heading", value: "MLS Farm Fresh Collection" },
+    { key: "products", value: JSON.stringify(prodGids) },
+  ]);
+
+  // Money-back guarantee — plain feature panel (image + text + CTA)
+  const guaranteeId = await upsertEntry("mls_section_feature_panel", `${P}-guarantee`, [
+    { key: "name", value: "Whole Carcass — Money-back Guarantee" },
+    { key: "variant", value: "plain" },
+    { key: "heading", value: "100% Money-back Guarantee" },
+    { key: "intro", value: "We understand the trust issues while buying fresh meat online, hence we promise free replacements and returns." },
+    { key: "button_text", value: "Shop Now" },
+    { key: "button_url", value: "#products" },
+  ]);
+
+  const sectionIds = [heroId, iconsId, messageId, reviewsId, reelsId, featuresId, cutPanelId, cutGridId, featuredId, guaranteeId].filter(Boolean) as string[];
+
+  const pageId = await upsertEntry("mls_landing_page", `${P}-page`, [
+    { key: "name", value: "Whole Lamb / Carcass (Landing Page)" },
+    { key: "handle_label", value: PAGE },
+    { key: "seo_title", value: "Whole Lamb & Carcass — Fresh, Fast & Convenient — MLS Oman" },
+    { key: "seo_description", value: "Your whole lamb shopping upgraded. Fresh whole carcass — lamb, goat, mutton — delivered fresh in Oman with a 100% money-back guarantee." },
+    { key: "sections", value: JSON.stringify(sectionIds) },
+  ]);
+
+  return { pageId, pageHandle: PAGE };
+}
+
+// ── Page 11: Australian Lamb ──────────────────────────────────────────────────
+async function seedAusLamb() {
+  const P = "aus-lamb";
+  const PAGE = "australian-lamb-lp";
+  const COLL = "australian-grass-fed-lamb";
+  console.log(`\n=== Seeding page: ${PAGE} ===`);
+  await ensurePage(PAGE, "Australian Lamb LP");
+
+  const heroId = await upsertEntry("mls_section_hero", `${P}-hero`, [
+    { key: "name", value: "AUS Lamb — Hero" },
+    { key: "heading", value: "Savor Australia's Finest Lamb at MLS" },
+    { key: "subheading", value: "Fresh AUS Lamb Mince 250gm for as low as 1.60 OMR!" },
+    { key: "button_text", value: "Shop Now" },
+    { key: "button_url", value: "#products" },
+    { key: "strip_text", value: "Winner of Oman's Most Trusted Meat Brand Award - 2023" },
+  ]);
+
+  const iconIds: string[] = [];
+  for (const it of [
+    { h: `${P}-icon-delivery`, name: "AUS Lamb — Icon: Fresh Delivery", heading: "1HR FRESH DELIVERY" },
+    { h: `${P}-icon-box`, name: "AUS Lamb — Icon: Delivered in Fresh Box", heading: "DELIVERED IN FRESH BOX" },
+    { h: `${P}-icon-hormone`, name: "AUS Lamb — Icon: Hormones Free", heading: "HORMONES FREE" },
+    { h: `${P}-icon-halal`, name: "AUS Lamb — Icon: Fresh & Halal", heading: "FRESH & HALAL" },
+  ]) {
+    const id = await upsertEntry("mls_icon_item", it.h, [{ key: "name", value: it.name }, { key: "heading", value: it.heading }]);
+    if (id) iconIds.push(id);
+  }
+  const iconsId = await upsertEntry("mls_section_icons", `${P}-icons`, [
+    { key: "name", value: "AUS Lamb — MLS Experience Icons" },
+    { key: "heading", value: "THE MLS EXPERIENCE" },
+    { key: "items", value: JSON.stringify(iconIds) },
+  ]);
+
+  const reviewsId = await seedReviewsSection(P, "AUS Lamb");
+
+  const promoId = await upsertEntry("mls_section_promo_banner", `${P}-promo`, [
+    { key: "name", value: "AUS Lamb — Fresh Lamb Prepared Promo" },
+    { key: "heading", value: "YOUR FRESH LAMB BEING PREPARED FOR YOU" },
+    { key: "button_text", value: "Watch How We Pack It" },
+    { key: "button_url", value: "#products" },
+  ]);
+
+  const gid = await collGid(COLL);
+  const gridFields: { key: string; value: string }[] = [
+    { key: "name", value: "AUS Lamb — Explore Fresh Australian Lamb" },
+    { key: "heading", value: "Explore Fresh Australian Lamb in Best Prices" },
+    { key: "layout", value: "grid" },
+    { key: "max_products", value: "60" },
+    { key: "show_view_all", value: "true" },
+  ];
+  if (gid) gridFields.push({ key: "collection", value: gid });
+  const gridId = await upsertEntry("mls_section_product_carousel", `${P}-grid`, gridFields);
+
+  const mediaIds: string[] = [];
+  for (const m of [
+    { h: `${P}-media-1`, name: "AUS Lamb — Flavors 1" },
+    { h: `${P}-media-2`, name: "AUS Lamb — Flavors 2" },
+    { h: `${P}-media-3`, name: "AUS Lamb — Flavors 3" },
+  ]) {
+    const id = await upsertEntry("mls_media_item", m.h, [{ key: "name", value: m.name }]);
+    if (id) mediaIds.push(id);
+  }
+  const showcaseId = await upsertEntry("mls_section_media_showcase", `${P}-showcase`, [
+    { key: "name", value: "AUS Lamb — Savor the Flavors" },
+    { key: "heading", value: "Savor the Flavors - Presenting MLS Australian Lamb" },
+    { key: "subheading", value: "From farm to your table, discover the journey of our premium Lamb collection." },
+    { key: "items", value: JSON.stringify(mediaIds) },
+  ]);
+
+  const sectionIds = [heroId, iconsId, reviewsId, promoId, gridId, showcaseId].filter(Boolean) as string[];
+
+  const pageId = await upsertEntry("mls_landing_page", `${P}-page`, [
+    { key: "name", value: "Australian Lamb (Landing Page)" },
+    { key: "handle_label", value: PAGE },
+    { key: "seo_title", value: "Savor Australia's Finest Lamb — MLS Oman" },
+    { key: "seo_description", value: "Australia's finest lamb at MLS. Fresh AUS lamb mince from 1.60 OMR, delivered fresh in Oman. Winner of Oman's Most Trusted Meat Brand 2023." },
+    { key: "sections", value: JSON.stringify(sectionIds) },
+  ]);
+
+  return { pageId, pageHandle: PAGE };
+}
+
 // Helper: resolve product handles → GIDs (product_reference list needs GIDs).
 async function productGids(handles: string[]): Promise<string[]> {
   const q = handles.map((h) => `handle:${h}`).join(" OR ");
@@ -1767,6 +2521,38 @@ async function fixHeroButtonUrlField() {
   }
   if (which === "all" || which === "brisket") {
     const { pageId, pageHandle } = await seedBrisket();
+    if (pageId) await linkPage(pageHandle, pageId);
+  }
+  if (which === "all" || which === "lamb-collection" || which === "lamb-sub-collection") {
+    const { pageId, pageHandle } = await seedLambCollection();
+    if (pageId) await linkPage(pageHandle, pageId);
+  }
+  if (which === "all" || which === "aus-lamb" || which === "australian-lamb-lp") {
+    const { pageId, pageHandle } = await seedAusLamb();
+    if (pageId) await linkPage(pageHandle, pageId);
+  }
+  if (which === "all" || which === "whole-carcass") {
+    const { pageId, pageHandle } = await seedWholeCarcass();
+    if (pageId) await linkPage(pageHandle, pageId);
+  }
+  if (which === "all" || which === "mishkak" || which === "mls-mishkak") {
+    const { pageId, pageHandle } = await seedMishkak();
+    if (pageId) await linkPage(pageHandle, pageId);
+  }
+  if (which === "all" || which === "poultry" || which === "fresh-poultry") {
+    const { pageId, pageHandle } = await seedPoultry();
+    if (pageId) await linkPage(pageHandle, pageId);
+  }
+  if (which === "all" || which === "nomu") {
+    const { pageId, pageHandle } = await seedNomu();
+    if (pageId) await linkPage(pageHandle, pageId);
+  }
+  if (which === "all" || which === "prime-box") {
+    const { pageId, pageHandle } = await seedPrimeBox();
+    if (pageId) await linkPage(pageHandle, pageId);
+  }
+  if (which === "all" || which === "signature-box") {
+    const { pageId, pageHandle } = await seedSignatureBox();
     if (pageId) await linkPage(pageHandle, pageId);
   }
 

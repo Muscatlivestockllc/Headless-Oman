@@ -14,18 +14,25 @@ export function MlsFeaturedProducts({ heading, products }: { heading?: string | 
   const lp = useLocalePath();
   if (products.length === 0) return null;
 
+  // Multiple products alternate section background (tinted / plain white) — like the box pages
+  // where one block sits on a pink band and the next on white. Single product = plain.
+  const alternate = products.length > 1;
+
   return (
-    <section id="products" className="py-10 md:py-14">
-      <div className="container mx-auto px-4">
-        {heading && (
-          <h2 className="mb-8 text-center font-display text-2xl font-bold tracking-tight md:text-3xl">{heading}</h2>
-        )}
-        <div className="mx-auto max-w-5xl space-y-12 md:space-y-16">
-          {products.map((p) => (
-            <FeaturedBlock key={p.node.id} product={p} lp={lp} />
-          ))}
-        </div>
-      </div>
+    <section id="products">
+      {heading && (
+        <h2 className="pt-10 text-center font-display text-2xl font-bold tracking-tight md:pt-14 md:text-3xl">{heading}</h2>
+      )}
+      {products.map((p, i) => {
+        const tinted = alternate && i % 2 === 0;
+        return (
+          <div key={p.node.id} className={tinted ? "bg-bone" : "bg-background"}>
+            <div className="container mx-auto max-w-5xl px-4 py-10 md:py-14">
+              <FeaturedBlock product={p} lp={lp} />
+            </div>
+          </div>
+        );
+      })}
     </section>
   );
 }
