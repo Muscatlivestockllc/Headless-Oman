@@ -569,10 +569,12 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     af(Q_HERO), af(Q_BADGES), af(Q_PRICE_SEC), af(Q_PRICE_TILE), af(Q_REELS_SEC),
     af(Q_PROMO), af(Q_VALUE), af(Q_COL_CFG), af(Q_ORIGIN), af(Q_CATEGORY),
     af(Q_CUTS), af(Q_FEATURED), af(Q_COL_LIST),
-    context.storefront.query(REELS_QUERY, { variables: { first: 20, query: "tag:reel" } }).catch(() => ({ products: { edges: [] } })),
+    context.storefront.query(REELS_QUERY, { variables: { first: 20, query: "tag:reel" }, cache: context.storefront.CacheShort() }).catch(() => ({ products: { edges: [] } })),
     af(Q_REEL_ITEMS), af(Q_GIFT), af(Q_SALE_SEC),
-    context.storefront.query(HOME_METAOBJECTS_QUERY, { variables: { language, country } }).catch(() => ({} as any)),
-    context.storefront.query(Q_BLOG_ARTICLES).catch(() => null),
+    // CacheShort (not the default CacheLong) so home-section metaobject edits reflect on
+    // production within ~seconds instead of up to an hour (matching local dev freshness).
+    context.storefront.query(HOME_METAOBJECTS_QUERY, { variables: { language, country }, cache: context.storefront.CacheShort() }).catch(() => ({} as any)),
+    context.storefront.query(Q_BLOG_ARTICLES, { cache: context.storefront.CacheShort() }).catch(() => null),
     fetchJudgemeStoreReviews(context.env.PUBLIC_STORE_DOMAIN, context.env.JUDGEME_API_TOKEN, 1, 9).catch(() => ({ reviews: [] as JudgemeReview[], current_page: 1, per_page: 9 })),
     fetchJudgemeShopStats(context.env.PUBLIC_STORE_DOMAIN, context.env.JUDGEME_API_TOKEN).catch(() => ({ average: 0, count: 0 })),
     // Home section layout (order + visibility). Catches so a missing definition never breaks the page.
