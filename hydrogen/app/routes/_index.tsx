@@ -101,6 +101,17 @@ const Q_SALE_SEC   = `{ nodes: metaobjects(type: "mls_sale_section", first: 1) {
 // Home layout: one mls_home_layout metaobject with a `section_order` multi-line text field
 // (one section key per line, in display order; omit a line or prefix with # to hide it).
 const Q_HOME_LAYOUT = `{ nodes: metaobjects(type: "mls_home_layout", first: 1) { nodes { id fields { key value } } } }`;
+// Storefront version — the layout drives which sections show/hide, so it MUST work on
+// production regardless of the admin token. mls_home_layout has Storefront access, so we
+// fetch it via the Storefront API (always available) instead of adminFetch (which returns
+// empty and falls back to the default all-sections order when the admin token is missing).
+const Q_HOME_LAYOUT_SF = `#graphql
+  query HomeLayout {
+    metaobjects(type: "mls_home_layout", first: 1) {
+      nodes { id fields { key value } }
+    }
+  }
+`;
 
 // Storefront API query to batch-fetch correct presentment prices by product GID.
 const REEL_PRODUCT_PRICES_QUERY = `#graphql
@@ -577,8 +588,11 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     context.storefront.query(Q_BLOG_ARTICLES, { cache: context.storefront.CacheShort() }).catch(() => null),
     fetchJudgemeStoreReviews(context.env.PUBLIC_STORE_DOMAIN, context.env.JUDGEME_API_TOKEN, 1, 9).catch(() => ({ reviews: [] as JudgemeReview[], current_page: 1, per_page: 9 })),
     fetchJudgemeShopStats(context.env.PUBLIC_STORE_DOMAIN, context.env.JUDGEME_API_TOKEN).catch(() => ({ average: 0, count: 0 })),
-    // Home section layout (order + visibility). Catches so a missing definition never breaks the page.
-    context.adminFetch(Q_HOME_LAYOUT).then((d: any) => d?.nodes ?? {}).catch(() => ({})),
+    // Home section layout (order + visibility) — via Storefront API so it works on production
+    // without depending on the admin token. CacheShort so edits reflect within seconds.
+    context.storefront.query(Q_HOME_LAYOUT_SF, { cache: context.storefront.CacheShort() })
+      .then((d: any) => d?.metaobjects ?? {})
+      .catch(() => ({})),
   ]);
 
   // Prefer Storefront API section when it returned nodes (translated content available);
