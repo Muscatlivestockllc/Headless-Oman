@@ -12,7 +12,7 @@ export interface CartDrawerConfig {
 const DEFAULT_CONFIG: CartDrawerConfig = {
   freeShippingThreshold: 350,
   deliveryItems: [
-    "Express delivery within **1–2 hours** across Muscat, Oman.",
+    "Express delivery within **1 hour** across Muscat, Oman.",
     "Order before **10:00 PM** for same-day delivery, 7 days a week.",
     "**Free Shipping** above OMR 35",
   ],

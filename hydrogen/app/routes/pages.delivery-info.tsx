@@ -6,7 +6,7 @@ import { detectLanguage } from "../lib/locale";
 
 export const meta: MetaFunction = () => [
   { title: "Delivery Info — MLS Oman" },
-  { name: "description", content: "Express delivery within 1–2 hours across Muscat, Oman. No minimum order value; standard delivery fee OMR 0.890." },
+  { name: "description", content: "Express delivery within 1 hour across Muscat, Oman. No minimum order value; standard delivery fee OMR 0.890." },
   { tagName: "link", rel: "canonical", href: "https://mls.om/pages/delivery-info" },
   { "script:ld+json": {
     "@context": "https://schema.org",
@@ -18,7 +18,7 @@ export const meta: MetaFunction = () => [
     areaServed: [
       { "@type": "City", name: "Muscat" },
     ],
-    description: "Express delivery within 1–2 hours across Muscat. Order before 10 PM for same-day delivery.",
+    description: "Express delivery within 1 hour across Muscat. Order before 10 PM for same-day delivery.",
     offers: {
       "@type": "Offer",
       priceCurrency: "OMR",
@@ -63,7 +63,7 @@ const FALLBACK_CITIES = [
     hours: "10 AM – 10:00 PM, all days",
     fee: "OMR 0.890",
     notes: [
-      "Express delivery within 1–2 hours across all Muscat areas",
+      "Express delivery within 1 hour across all Muscat areas",
       "Order anytime up to 10:00 PM for same-day delivery",
       "No minimum order value",
       "Deliveries continue until 10:30 PM",

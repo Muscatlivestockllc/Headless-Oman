@@ -367,7 +367,7 @@ function DeliveryTab({ pageSettings }: { pageSettings: PageSettings | undefined 
   type CityBlock = { label: string; body: string };
 
   const DEFAULT_MUSCAT: CityBlock[] = [
-    { label: "Delivery Time",         body: "Fresh delivery within 1–2 hours across Muscat. Order before 10:00 PM for same-day delivery, 7 days a week." },
+    { label: "Delivery Time",         body: "Fresh delivery within 1 hour across Muscat. Order before 10:00 PM for same-day delivery, 7 days a week." },
     { label: "Last Order Time",       body: "10:00 PM is our last order cutoff, all days of the week." },
     { label: "Delivery Fee",          body: "No minimum order value. Standard delivery fee is OMR 0.890." },
     { label: "Free Returns",          body: "We offer a \"no questions asked\" free returns policy which allows you to return delivered items to us for any reason up to 30 days from the delivery of your order, free of charge." },
