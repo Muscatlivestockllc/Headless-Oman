@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -45,12 +45,18 @@ export function QuickBuyDrawer() {
   // variantId → { planId → subscriptionPriceAmount }
   const [variantAllocations, setVariantAllocations] = useState<Record<string, Record<string, string>>>({});
 
-  // Reset variant selection + qty when the product changes — done DURING render (not in an
-  // effect) so the very first paint already shows the correct selection (avoids the flash where
-  // all values appear, then the unavailable ones disappear once the effect runs).
-  const lastHandle = useRef<string | null>(null);
-  if (node && lastHandle.current !== node.handle) {
-    lastHandle.current = node.handle;
+  // Auto-select the first available variant whenever the drawer OPENS with a product — done
+  // DURING render (not in an effect) so the very first paint already shows the correct selection
+  // (avoids the flash where all values appear, then unavailable ones disappear).
+  //
+  // We track the initialized instance with STATE (not a ref): mutating a ref during render is not
+  // safe under React StrictMode / concurrent rendering — the ref could advance on a render pass
+  // whose setSelected() is later discarded, leaving the selection empty (the bug we're fixing).
+  // Keying on `isOpen + handle` also re-initializes each time the drawer is re-opened.
+  const openKey = isOpen && node ? node.handle : null;
+  const [initedKey, setInitedKey] = useState<string | null>(null);
+  if (openKey && initedKey !== openKey) {
+    setInitedKey(openKey);
     const firstAvail = variants.find((v) => v.availableForSale) ?? variants[0];
     const map: Record<string, string> = {};
     firstAvail?.selectedOptions.forEach((o) => (map[o.name] = o.value));
