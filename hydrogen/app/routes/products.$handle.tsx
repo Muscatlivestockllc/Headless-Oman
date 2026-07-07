@@ -319,26 +319,26 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
     .map((c: any) => Number(c.id.split("/").pop()))
     .filter(Boolean);
 
-  // Strategy 1: scrape Globo config from Shopify theme HTML (proven approach).
-  // Strategy 2: try the Globo app-proxy JSON endpoint as fallback.
-  // Both run for every product so all templates get Globo options.
-  // Fetch Globo options by scraping the LIVE store's product page HTML.
-  // We try the custom domain first (mls.om) because that's where the Shopify
-  // theme with Globo is actually running. The myshopify subdomain may serve a
-  // password page or a Globo-less version of the HTML.
-  // Globo HTML scrape — capped at 1 200 ms total so it never blocks SSR.
-  // If it misses, the client-side /api/globo-options/:id fetch takes over automatically.
+  // Globo is a client-rendered app: its option sets are NOT in the raw /products/
+  // HTML (window.GPOConfigs.options is populated at runtime by JS). The one place
+  // they're emitted server-side is Globo's search view, which embeds EVERY store
+  // option set as window.GPOConfigs.options[ID] = {...} with its own product rule
+  // (all / manual ids / automate-by-collection). We scrape that and let
+  // extractGloboOptionsFromHtml keep only the sets matching this product
+  // (by numeric id + the collection ids computed above).
+  // mls.om (custom domain) first — that's where the Globo-enabled theme runs.
+  // Deferred (streams in lazyData) so a longer timeout never blocks initial paint.
   const globoPromise: Promise<GloboOptionSet[]> = externalId
     ? Promise.race([
         (async () => {
           const numId = Number(externalId);
           const htmlHeaders = { Accept: "text/html", "User-Agent": "Mozilla/5.0" };
           const htmlUrls = [...new Set([liveDomain, shopDomain])].map(
-            (d) => `https://${d}/products/${handle}`,
+            (d) => `https://${d}/search?view=gpo&q=handles:${encodeURIComponent(handle)}`,
           );
           const htmlResults = await Promise.allSettled(
             htmlUrls.map((url) =>
-              fetch(url, { headers: htmlHeaders, redirect: "follow", signal: AbortSignal.timeout(1200) }),
+              fetch(url, { headers: htmlHeaders, redirect: "follow", signal: AbortSignal.timeout(3500) }),
             ),
           );
           for (const res of htmlResults) {
@@ -351,7 +351,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
           }
           return [];
         })(),
-        new Promise<GloboOptionSet[]>((resolve) => setTimeout(() => resolve([]), 1200)),
+        new Promise<GloboOptionSet[]>((resolve) => setTimeout(() => resolve([]), 3500)),
       ])
     : Promise.resolve([]);
 

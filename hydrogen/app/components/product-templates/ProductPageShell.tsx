@@ -978,7 +978,7 @@ export function ProductPageShell({
   useEffect(() => {
     if (!externalId || liveGloboSets.length > 0) return;
     setGloboLoading(true);
-    fetch(`/api/globo-options/${externalId}`)
+    fetch(`/api/globo-options/${externalId}?handle=${encodeURIComponent(product.handle)}`)
       .then((r) => r.ok ? r.json() : { optionSets: [] })
       .then((data: any) => {
         const raw: GloboOptionSet[] = data?.optionSets ?? [];
