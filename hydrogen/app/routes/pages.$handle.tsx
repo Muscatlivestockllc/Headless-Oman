@@ -12,6 +12,7 @@ import { YoutubeReelsSection } from "~/components/landing-pages/YoutubeReelsSect
 import { LpCertificationsSection } from "~/components/landing-pages/LpCertificationsSection";
 import { LpProductCarousel } from "~/components/landing-pages/LpProductCarousel";
 import type { ShopifyProduct } from "@/lib/shopify";
+import { loadLandingSections, MlsLandingSections } from "~/lib/mlsLanding";
 
 // ── Product fragment ──────────────────────────────────────────────────────────
 
@@ -249,6 +250,27 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
   const path = new URL(request.url).pathname;
   const userLanguage = (path.startsWith("/ar/") || path === "/ar" || lang === "ar" ? "AR" : "EN") as "AR" | "EN";
 
+  // ── NEW mls_* landing-page builder ──────────────────────────────────────────
+  // If this page has a `custom.landing_page` metafield (assigned in admin), render the
+  // mls_* section builder and skip the legacy lp_* / prose paths entirely. Fully
+  // metafield-driven — no per-page code. Falls through when not set.
+  const mlsLanding = await loadLandingSections(context, handle, userLanguage);
+  if (mlsLanding) {
+    return {
+      isMlsLanding: true as const,
+      sections: mlsLanding.sections,
+      productsByCollection: mlsLanding.productsByCollection,
+      productsByHandle: mlsLanding.productsByHandle,
+      mlsSeo: mlsLanding.seo,
+      mlsTheme: mlsLanding.theme,
+      // Fields the rest of the component/meta expect (unused on the mls path):
+      isLandingPage: false as const,
+      page: { title: mlsLanding.seo.title ?? "", body: "", seo: mlsLanding.seo },
+      lpPageNodes: [] as any[],
+      reelItems: [] as any[],
+    };
+  }
+
   // Fetch page in the user's language so Translate & Adapt translations are served.
   // If the AR query returns no section references (type not yet set up for AR in T&A),
   // fall back to EN so the page at least renders.
@@ -296,6 +318,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
   // Regular prose page
   if (lpPageNodes.length === 0) {
     return {
+      isMlsLanding: false as const,
       isLandingPage: false as const,
       page: { title: data.page?.title ?? "", body: data.page?.body ?? "", seo: data.page?.seo ?? null },
       lpPageNodes: [],
@@ -370,6 +393,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
   await Promise.all(tasks);
 
   return {
+    isMlsLanding: false as const,
     isLandingPage: true as const,
     page: { title: data.page.title, body: data.page.body, seo: data.page.seo },
     lpPageNodes,
@@ -539,8 +563,13 @@ function renderLpTypes(
 // ── Page component ────────────────────────────────────────────────────────────
 
 export default function Page() {
-  const { isLandingPage, page, lpPageNodes, productsByCollection, reelItems } =
-    useLoaderData<typeof loader>();
+  const data = useLoaderData<typeof loader>();
+  const { isLandingPage, page, lpPageNodes, productsByCollection, reelItems } = data;
+
+  // ── NEW mls_* landing page ──────────────────────────────────────────────────
+  if (data.isMlsLanding) {
+    return <MlsLandingSections sections={data.sections} productsByCollection={data.productsByCollection} productsByHandle={data.productsByHandle} theme={data.mlsTheme} />;
+  }
 
   // ── Landing page ──────────────────────────────────────────────────────────────
   if (isLandingPage) {
