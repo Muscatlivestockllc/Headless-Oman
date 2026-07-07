@@ -166,7 +166,7 @@ export async function fetchJudgemeStoreReviews(
   const url =
     `${JUDGEME_BASE}/reviews?api_token=${encodeURIComponent(apiToken)}` +
     `&shop_domain=${encodeURIComponent(shopDomain)}` +
-    `&page=${page}&per_page=${perPage}`;
+    `&rating=4,5&page=${page}&per_page=${perPage}`;
   try {
     const res = await fetch(url, { headers: { Accept: "application/json" } });
     if (!res.ok) return emptyResponse(page, perPage);

@@ -10,8 +10,9 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     env.PUBLIC_STORE_DOMAIN,
     env.JUDGEME_API_TOKEN,
     page,
-    20,
+    50,
   );
 
-  return Response.json({ reviews: data.reviews, totalCount: data.total_count ?? 0 });
+  const reviews = (data.reviews ?? []).filter((r: any) => r.rating >= 4);
+  return Response.json({ reviews, totalCount: data.total_count ?? 0 });
 }

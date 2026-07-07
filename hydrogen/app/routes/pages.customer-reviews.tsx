@@ -92,10 +92,10 @@ export async function loader({ context }: LoaderFunctionArgs) {
   const [metaData, page1, page2] = await Promise.all([
     context.adminFetch(METAFIELD_QUERY),
     apiToken
-      ? fetch(`https://judge.me/api/v1/reviews?api_token=${encodeURIComponent(apiToken)}&shop_domain=${encodeURIComponent(shopDomain)}&page=1&per_page=50`, { headers: { Accept: "application/json" } }).then(r => r.ok ? r.json() : { reviews: [] }).catch(() => ({ reviews: [] }))
+      ? fetch(`https://judge.me/api/v1/reviews?api_token=${encodeURIComponent(apiToken)}&shop_domain=${encodeURIComponent(shopDomain)}&rating=4,5&page=1&per_page=50`, { headers: { Accept: "application/json" } }).then(r => r.ok ? r.json() : { reviews: [] }).catch(() => ({ reviews: [] }))
       : Promise.resolve({ reviews: [] }),
     apiToken
-      ? fetch(`https://judge.me/api/v1/reviews?api_token=${encodeURIComponent(apiToken)}&shop_domain=${encodeURIComponent(shopDomain)}&page=2&per_page=50`, { headers: { Accept: "application/json" } }).then(r => r.ok ? r.json() : { reviews: [] }).catch(() => ({ reviews: [] }))
+      ? fetch(`https://judge.me/api/v1/reviews?api_token=${encodeURIComponent(apiToken)}&shop_domain=${encodeURIComponent(shopDomain)}&rating=4,5&page=2&per_page=50`, { headers: { Accept: "application/json" } }).then(r => r.ok ? r.json() : { reviews: [] }).catch(() => ({ reviews: [] }))
       : Promise.resolve({ reviews: [] }),
   ]);
 
@@ -124,7 +124,8 @@ export async function loader({ context }: LoaderFunctionArgs) {
   // Fall back to HTML parsing from metafields if REST API returned nothing
   const reviews0 = shop.reviews0?.value ?? "";
   const reviews1 = shop.reviews1?.value ?? "";
-  const reviews = apiReviews.length > 0 ? apiReviews : parseReviews(reviews0 + reviews1);
+  const allParsed = apiReviews.length > 0 ? apiReviews : parseReviews(reviews0 + reviews1);
+  const reviews = allParsed.filter((r) => r.rating >= 4);
 
   return { reviews, count, rating, histogram, medals };
 }
@@ -132,11 +133,14 @@ export async function loader({ context }: LoaderFunctionArgs) {
 export default function CustomerReviewsPage() {
   const { reviews: initialReviews, count, rating, histogram, medals } = useLoaderData<typeof loader>();
   const [allReviews, setAllReviews] = useState<ParsedReview[]>(initialReviews);
-  const [page, setPage] = useState(6); // loader fetched 100 reviews = pages 1-5 at 20/page
+  const [page, setPage] = useState(3); // loader fetched pages 1-2 at 50/page; load-more continues from page 3
+  const [exhausted, setExhausted] = useState(false);
   const fetcher = useFetcher<{ reviews: JudgemeReview[]; totalCount: number }>();
 
   useEffect(() => {
     if (fetcher.state !== "idle" || !fetcher.data?.reviews) return;
+    // If the API returned 0 reviews there are no more pages
+    if (fetcher.data.reviews.length === 0) { setExhausted(true); return; }
     const incoming: ParsedReview[] = fetcher.data.reviews.map((r: JudgemeReview) => ({
       id:       String(r.id),
       rating:   r.rating ?? 5,
@@ -153,7 +157,9 @@ export default function CustomerReviewsPage() {
     }));
     setAllReviews(prev => {
       const seen = new Set(prev.map(r => r.id));
-      return [...prev, ...incoming.filter(r => !seen.has(r.id))];
+      const fresh = incoming.filter(r => !seen.has(r.id) && r.rating >= 4);
+      if (fresh.length === 0) setExhausted(true);
+      return [...prev, ...fresh];
     });
   }, [fetcher.state, fetcher.data]);
 
@@ -162,7 +168,7 @@ export default function CustomerReviewsPage() {
     setPage(p => p + 1);
   };
 
-  const hasMore = allReviews.length < count;
+  const hasMore = !exhausted;
   const allPhotos = allReviews.flatMap(r => r.pictures);
 
   const starLabels = ["1 star", "2 stars", "3 stars", "4 stars", "5 stars"];
