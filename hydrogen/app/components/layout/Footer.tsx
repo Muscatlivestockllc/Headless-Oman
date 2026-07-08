@@ -69,6 +69,21 @@ export function Footer({ settings, menuCols }: Props) {
 
   return (
     <footer className="bg-gradient-footer text-charcoal-foreground">
+      {/* Blend the Klaviyo Footer-signup embed into the dark footer: light text, a clean white
+          input + crimson button, and a sane font size (its default text renders oversized). */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .klaviyo-embed .klaviyo-form-TXvrLy * { font-size: 15px !important; line-height: 1.5 !important; color: #ffffff !important; background: transparent !important; box-shadow: none !important; }
+        .klaviyo-embed .klaviyo-form-TXvrLy h1,
+        .klaviyo-embed .klaviyo-form-TXvrLy h2,
+        .klaviyo-embed .klaviyo-form-TXvrLy h3,
+        .klaviyo-embed .klaviyo-form-TXvrLy h4 { font-size: 18px !important; line-height: 1.3 !important; margin: 0 0 6px !important; }
+        .klaviyo-embed .klaviyo-form-TXvrLy input,
+        .klaviyo-embed .klaviyo-form-TXvrLy input[type="email"],
+        .klaviyo-embed .klaviyo-form-TXvrLy input[type="text"] { color: #1a1a1a !important; background: #ffffff !important; }
+        .klaviyo-embed .klaviyo-form-TXvrLy input::placeholder { color: #6b7280 !important; }
+        .klaviyo-embed .klaviyo-form-TXvrLy button,
+        .klaviyo-embed .klaviyo-form-TXvrLy [type="submit"] { color: #ffffff !important; background: #8B0000 !important; }
+      ` }} />
       {/* Subtle gold gradient hairline accent at the very top of the footer */}
       <div className="h-px w-full bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
       <div className="container mx-auto px-4 py-12">
@@ -97,11 +112,11 @@ export function Footer({ settings, menuCols }: Props) {
               </AccordionItem>
             ))}
           </Accordion>
-          {/* Newsletter — signup is handled by the Klaviyo popup (Oman account SC5Mtp),
-              same as the live site (no embedded form). */}
+          {/* Newsletter signup (Klaviyo Footer-signup embed) below the accordions */}
           <div className="mt-8">
             <p className="mb-1 text-base font-bold text-white">{contact.newsletterTitle}</p>
-            <p className="text-sm text-off-white/70">{contact.newsletterSubtitle}</p>
+            <p className="mb-4 text-sm text-off-white/70">{contact.newsletterSubtitle}</p>
+            <KlaviyoNewsletter />
           </div>
         </div>
       </div>
@@ -223,13 +238,25 @@ function NavCol({ heading, links }: { heading: string; links: FooterLink[] }) {
 }
 
 function NewsletterCol({ title, subtitle }: { title: string; subtitle: string }) {
-  // Newsletter signup is handled by the Klaviyo popup (Oman account SC5Mtp), matching the
-  // live site which uses a popup rather than an embedded footer form.
   return (
     <div className="min-w-[220px] max-w-[280px] flex-1">
       <h4 className="mb-2 font-display text-base font-bold text-white">{title}</h4>
-      <p className="text-sm text-off-white/70">{subtitle}</p>
+      <p className="mb-4 text-sm text-off-white/70">{subtitle}</p>
+      <KlaviyoNewsletter />
     </div>
+  );
+}
+
+// Klaviyo "Footer-signup" embed form. The Klaviyo Onsite JS (loaded in root.tsx for the SC5Mtp
+// account) scans the page for this class and renders the form in place. dangerouslySetInnerHTML
+// with a constant + suppressHydrationWarning keeps React from wiping the markup Klaviyo injects.
+function KlaviyoNewsletter() {
+  return (
+    <div
+      className="klaviyo-embed"
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: '<div class="klaviyo-form-TXvrLy"></div>' }}
+    />
   );
 }
 
