@@ -30,7 +30,10 @@ function firePixels(event: string, data: Record<string, any>) {
     const items: any[] = Array.isArray(ec.items) ? ec.items : [];
     const ids = items.map((i) => i.item_id).filter(Boolean);
     const value = typeof ec.value === "number" ? ec.value : 0;
-    const currency = ec.currency || "OMR";
+    // Meta/TikTok/Snap require a valid ISO-4217 3-letter code (e.g. "OMR"). Normalize and guard —
+    // a symbol, lower-case, or padded value triggers Meta's "invalid currency parameter format" warning.
+    const rawCurrency = String(ec.currency || "OMR").trim().toUpperCase();
+    const currency = /^[A-Z]{3}$/.test(rawCurrency) ? rawCurrency : "OMR";
     const fbContents = items.map((i) => ({ id: i.item_id, quantity: i.quantity || 1 }));
     const ttContents = items.map((i) => ({ content_id: i.item_id, content_type: "product", content_name: i.item_name, quantity: i.quantity || 1, price: i.price || 0 }));
 

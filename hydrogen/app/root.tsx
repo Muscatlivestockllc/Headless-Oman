@@ -603,11 +603,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             critical path. The Meta/TikTok/Snapchat ad pixels below are NOT deferred. */}
         <script dangerouslySetInnerHTML={{ __html: `(function(w,d){w.dataLayer=w.dataLayer||[];w.dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});var done=false,t;function L(){var j=d.createElement('script');j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id=GTM-MNFBCW5';d.head.appendChild(j);}var evts=['scroll','touchstart','mousedown','keydown','mousemove'];function R(){if(done)return;done=true;clearTimeout(t);evts.forEach(function(e){w.removeEventListener(e,R)});L();}evts.forEach(function(e){w.addEventListener(e,R,{passive:true})});t=setTimeout(R,4000);})(window,document);` }} />
         {/* ── Ad pixels (Meta / TikTok / Snapchat) ──────────────────────────────────
-             REMOVED for now — the previous IDs were the UAE store's. Re-add the Oman
-             pixel IDs here at go-live. dataLayer.ts already no-ops safely when these
-             globals (fbq / ttq / snaptr) are absent, so nothing else needs changing.
-             To restore: add the Meta (fbq init), TikTok (ttq.load) and Snapchat
-             (snaptr init) snippets back here with the Oman account IDs. ── */}
+             Now wired via the <MarketingPixels/> component (injected after hydration, like the
+             UAE site). At go-live, just fill the Oman IDs in the PIXEL_IDS constant near App() —
+             each pixel stays OFF until its ID is set (no UAE IDs are used). ── */}
         {/* Klaviyo — proxy stub so klaviyo.push() is safe before SDK loads */}
         <script dangerouslySetInnerHTML={{ __html: `!function(){if(!window.klaviyo){window._klOnsite=window._klOnsite||[];try{window.klaviyo=new Proxy({},{get:function(n,i){return"push"===i?function(){var n;(n=window._klOnsite).push.apply(n,arguments)}:function(){for(var n=arguments.length,o=new Array(n),w=0;w<n;w++)o[w]=arguments[w];var t="function"==typeof o[o.length-1]?o.pop():void 0,e=new Promise((function(n){window._klOnsite.push([i].concat(o,[function(i){t&&t(i),n(i)}]))}));return e}}})}catch(n){window.klaviyo=window.klaviyo||[],window.klaviyo.push=function(){var n;(n=window._klOnsite).push.apply(n,arguments)}}}}();` }} />
         {/* Klaviyo Onsite JS — handles forms, page tracking, identify */}
@@ -916,6 +914,52 @@ function DataLayerRouteTracker() {
   return null;
 }
 
+// ── Ad pixels (Meta / TikTok / Snapchat) ──────────────────────────────────────
+// Structure ported from the (working) UAE site. IDs below are BLANK placeholders — add the OMAN
+// account IDs at go-live and that pixel activates automatically. Any pixel left blank is skipped
+// (its script never loads → NO wrong/UAE tracking). dataLayer.ts already forwards ecommerce events
+// (PageView / ViewContent / AddToCart / Purchase …) to fbq / ttq / snaptr once these globals exist,
+// so filling in an ID below is the ONLY change needed at go-live.
+const PIXEL_IDS = {
+  meta: "",      // Meta (Facebook) Pixel ID   — e.g. "1234567890123456"
+  tiktok: "",    // TikTok Pixel ID            — e.g. "CXXXXXXXXXXXXXXXXXXX"
+  snapchat: "",  // Snapchat Pixel ID          — e.g. "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+};
+
+// Vendor install snippets (verbatim), parameterized by ID. Only built for pixels that have an ID.
+function buildPixelSnippets(): string[] {
+  const out: string[] = [];
+  if (PIXEL_IDS.meta) {
+    out.push(`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${PIXEL_IDS.meta}');fbq('track','PageView');`);
+  }
+  if (PIXEL_IDS.tiktok) {
+    out.push(`!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=i,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};var a=document.createElement("script");a.type="text/javascript",a.async=!0,a.src=i+"?sdkid="+e+"&lib="+t;var s=document.getElementsByTagName("script")[0];s.parentNode.insertBefore(a,s)};ttq.load('${PIXEL_IDS.tiktok}');ttq.page();}(window,document,'ttq');`);
+  }
+  if (PIXEL_IDS.snapchat) {
+    out.push(`(function(e,t,n){if(e.snaptr)return;var a=e.snaptr=function(){a.handleRequest?a.handleRequest.apply(a,arguments):a.queue.push(arguments)};a.queue=[];var s='script';var r=t.createElement(s);r.async=!0;r.src=n;var u=t.getElementsByTagName(s)[0];u.parentNode.insertBefore(r,u)})(window,document,'https://sc-static.net/scevent.min.js');snaptr('init','${PIXEL_IDS.snapchat}');snaptr('track','PAGE_VIEW');`);
+  }
+  return out;
+}
+
+// Injects the ad pixels in a single client effect AFTER hydration (SSR-ing them mutates <head>
+// before hydration and causes a fatal hydration mismatch — hence a post-hydration effect).
+// No-op until at least one PIXEL_IDS entry is filled.
+function MarketingPixels() {
+  useEffect(() => {
+    const w = window as unknown as { __mlsPixelsLoaded?: boolean };
+    if (w.__mlsPixelsLoaded) return;
+    const snippets = buildPixelSnippets();
+    if (snippets.length === 0) return;
+    w.__mlsPixelsLoaded = true;
+    for (const js of snippets) {
+      const s = document.createElement("script");
+      s.textContent = js;
+      document.head.appendChild(s);
+    }
+  }, []);
+  return null;
+}
+
 export default function App() {
   const { mainMenu, secondaryMenu, mobileMenu, mobileCategoriesMenu, footerSettings, footerMenuCols, announcementMessages, navItemImages, mobileBanners } = useLoaderData<typeof loader>();
   return (
@@ -923,6 +967,7 @@ export default function App() {
       <PageLoader />
       <LocaleSync />
       <DataLayerRouteTracker />
+      <MarketingPixels />
       <CartSyncWrapper />
       <RichpanelWidget />
       <div className="flex min-h-screen flex-col">
