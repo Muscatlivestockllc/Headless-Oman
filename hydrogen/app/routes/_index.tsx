@@ -589,7 +589,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     // production within ~seconds instead of up to an hour (matching local dev freshness).
     context.storefront.query(HOME_METAOBJECTS_QUERY, { variables: { language, country }, cache: context.storefront.CacheShort() }).catch(() => ({} as any)),
     context.storefront.query(Q_BLOG_ARTICLES, { cache: context.storefront.CacheShort() }).catch(() => null),
-    fetchJudgemeStoreReviews(context.env.PUBLIC_STORE_DOMAIN, context.env.JUDGEME_API_TOKEN, 1, 9).catch(() => ({ reviews: [] as JudgemeReview[], current_page: 1, per_page: 9 })),
+    fetchJudgemeStoreReviews(context.env.PUBLIC_STORE_DOMAIN, context.env.JUDGEME_API_TOKEN, 1, 12, "5").catch(() => ({ reviews: [] as JudgemeReview[], current_page: 1, per_page: 12 })),
     fetchJudgemeShopStats(context.env.PUBLIC_STORE_DOMAIN, context.env.JUDGEME_API_TOKEN).catch(() => ({ average: 0, count: 0 })),
     // Home section layout (order + visibility) — via Storefront API so it works on production
     // without depending on the admin token. CacheShort so edits reflect within seconds.
@@ -739,7 +739,9 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     )
     .slice(0, 6);
 
-  const storeReviews: JudgemeReview[] = ((reviewsData as any)?.reviews ?? []).filter((r: JudgemeReview) => r.rating >= 4);
+  // Home page shows only the BEST (5-star) reviews. Fetched with rating="5"; this filter is a
+  // safety net in case the API returns any lower ratings.
+  const storeReviews: JudgemeReview[] = ((reviewsData as any)?.reviews ?? []).filter((r: JudgemeReview) => r.rating >= 5);
   const reviewTotalCount: number = (reviewsData as any)?.total_count ?? 0;
   const reviewAverage: number = (shopStats as any)?.average ?? 0;
 

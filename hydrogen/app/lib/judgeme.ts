@@ -161,12 +161,13 @@ export async function fetchJudgemeStoreReviews(
   apiToken: string | undefined,
   page = 1,
   perPage = 10,
+  rating = "4,5", // Judge.me rating filter — e.g. "5" for best-only, "4,5" for 4-and-5 star
 ): Promise<JudgemeReviewsResponse> {
   if (!apiToken) return emptyResponse(page, perPage);
   const url =
     `${JUDGEME_BASE}/reviews?api_token=${encodeURIComponent(apiToken)}` +
     `&shop_domain=${encodeURIComponent(shopDomain)}` +
-    `&rating=4,5&page=${page}&per_page=${perPage}`;
+    `&rating=${encodeURIComponent(rating)}&page=${page}&per_page=${perPage}`;
   try {
     const res = await fetch(url, { headers: { Accept: "application/json" } });
     if (!res.ok) return emptyResponse(page, perPage);
