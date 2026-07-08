@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import logo from "@/assets/mls-logo.png";
@@ -118,7 +118,7 @@ export function Footer({ settings, menuCols }: Props) {
           <div className="mt-8">
             <p className="mb-1 text-base font-bold text-white">{contact.newsletterTitle}</p>
             <p className="mb-4 text-sm text-off-white/70">{contact.newsletterSubtitle}</p>
-            <NewsletterForm />
+            <FooterNewsletter />
           </div>
         </div>
       </div>
@@ -244,7 +244,7 @@ function NewsletterCol({ title, subtitle }: { title: string; subtitle: string })
     <div className="min-w-[220px] max-w-[280px] flex-1">
       <h4 className="mb-2 font-display text-base font-bold text-white">{title}</h4>
       <p className="mb-4 text-sm text-off-white/70">{subtitle}</p>
-      <NewsletterForm />
+      <FooterNewsletter />
     </div>
   );
 }
@@ -316,14 +316,36 @@ function NewsletterForm() {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function KlaviyoNewsletter() {
+// Footer newsletter — renders the Klaviyo "Footer-signup" embed (Oman account SC5Mtp / form
+// TXvrLy, the same form UAE uses). Klaviyo's on-site JS injects the real form into that div. If
+// it doesn't render within ~6s (e.g. the form's domain targeting blocks this domain), we fall
+// back to the native <NewsletterForm/> so there is ALWAYS an email input. Either way, signups go
+// to the same Klaviyo Footer-signup list.
+function FooterNewsletter() {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [embedLive, setEmbedLive] = useState(false);
+  useEffect(() => {
+    let tries = 0;
+    const id = window.setInterval(() => {
+      const el = wrapRef.current?.querySelector<HTMLElement>(".klaviyo-form-TXvrLy");
+      if (el && el.childElementCount > 0) {
+        setEmbedLive(true);
+        window.clearInterval(id);
+      } else if (++tries > 24) {
+        window.clearInterval(id); // ~6s — keep the native fallback visible
+      }
+    }, 250);
+    return () => window.clearInterval(id);
+  }, []);
   return (
-    <div
-      className="klaviyo-embed"
-      suppressHydrationWarning
-      dangerouslySetInnerHTML={{ __html: '<div class="klaviyo-form-TXvrLy"></div>' }}
-    />
+    <div ref={wrapRef}>
+      <div
+        className="klaviyo-embed"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: '<div class="klaviyo-form-TXvrLy"></div>' }}
+      />
+      {!embedLive && <NewsletterForm />}
+    </div>
   );
 }
 
