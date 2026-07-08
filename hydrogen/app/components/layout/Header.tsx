@@ -421,7 +421,13 @@ function MobileMenuDrawer({
   // Use the language-stable English label (set in AR) so the Categories tab is detected
   // even when its visible label is translated (e.g. "الفئات").
   const isCategories     = (tabs[tab1Idx]?.enLabel ?? tabs[tab1Idx]?.label ?? "").toLowerCase() === "categories";
-  const mobileCatEntries = mobileCategoriesMenu.length > 0 ? mobileCategoriesMenu : mainMenu;
+  // Labels that have their own dedicated top tab (e.g. "Explore Meat"), so we don't ALSO repeat
+  // them inside the Categories accordion (which mirrors the desktop nav / hydrogen-desktop).
+  const tabLabelSet = new Set(
+    tabs.map((tb) => (tb.enLabel ?? tb.label ?? "").trim().toLowerCase()).filter((l) => l && l !== "categories"),
+  );
+  const mobileCatEntries = (mobileCategoriesMenu.length > 0 ? mobileCategoriesMenu : mainMenu)
+    .filter((e) => !tabLabelSet.has((e.label ?? "").trim().toLowerCase()));
 
   const handleTab1      = (i: number)   => { setTab1Idx(i); setOpenEntries(new Set()); setOpenCols(new Set()); setOpenItems(new Set()); };
   const toggleEntry     = (id: string)  => setOpenEntries((p)    => { const n = new Set(p); n.has(id)  ? n.delete(id)  : n.add(id);  return n; });
