@@ -65,6 +65,7 @@ export default hydrogenRoutes([
   route('api/reviews/:handle', 'routes/api.reviews.$handle.tsx'),
   route('api/globo-options/:productId', 'routes/api.globo-options.$productId.tsx'),
   route('api/back-in-stock', 'routes/api.back-in-stock.tsx'),
+  route('api/newsletter-subscribe', 'routes/api.newsletter-subscribe.tsx'),
   route('api/discounts', 'routes/api.discounts.ts'),
   route('pages/customer-reviews', 'routes/pages.customer-reviews.tsx'),
   route('pages/contact-us', 'routes/pages.contact.tsx'),
