@@ -119,7 +119,10 @@ function parseGloboMarker(
       const automateEnabled = rule?.automate?.enable === true || rule?.automate?.enabled === true;
       const appliesToAutomate = (() => {
         if (!automateEnabled) return false;
-        if (collectionIds === undefined) return true; // unknown — allow through conservatively
+        // If we don't know the product's collections, DON'T match collection-targeted sets —
+        // "allow all" would attach every automate set to the product (e.g. the Arabic PDP showed
+        // the "Do you Require Butcher Service?" dropdown 6 times, one per store option set).
+        if (collectionIds === undefined) return false;
         const conditions: any[] = rule.automate.conditions ?? [];
         const collConditions = conditions.filter((c: any) => c.select === "COLLECTION");
         if (collConditions.length === 0) return true; // no collection conditions — allow through

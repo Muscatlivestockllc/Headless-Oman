@@ -63,7 +63,24 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
   // Live custom domain first — that's where the Globo-enabled Shopify theme runs.
   const domains = [...new Set([liveDomain, shopDomain])];
 
-  const collectionIds = await fetchCollectionIds(domains, handle);
+  // Collection IDs are REQUIRED to match collection-targeted option sets to this product.
+  // Try Globo's app-proxy first; if it returns nothing (e.g. the Arabic PDP passes a handle the
+  // proxy can't resolve), fall back to the Storefront API. Without ids, collection-rule sets are
+  // NOT matched (see lib/globo) to avoid attaching every store set to the product.
+  let collectionIds = await fetchCollectionIds(domains, handle);
+  if (collectionIds.length === 0) {
+    try {
+      const d = (await context.storefront.query(
+        `query($handle: String!){ product(handle: $handle){ collections(first: 50){ nodes { id } } } }`,
+        { variables: { handle }, cache: context.storefront.CacheShort() },
+      )) as any;
+      collectionIds = (d?.product?.collections?.nodes ?? [])
+        .map((c: any) => Number(String(c.id).split("/").pop()))
+        .filter((n: number) => Number.isFinite(n));
+    } catch {
+      /* keep empty */
+    }
+  }
 
   for (const d of domains) {
     try {
