@@ -64,8 +64,8 @@ export default function BlogsAll() {
 }
 
 function ArticleCard({ article }: { article: any }) {
-  const date = new Date(article.publishedAt).toLocaleDateString("en-AE", {
-    day: "numeric", month: "short", year: "numeric",
+  const date = new Date(article.publishedAt).toLocaleDateString("en-GB", {
+    day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Muscat",
   });
 
   return (

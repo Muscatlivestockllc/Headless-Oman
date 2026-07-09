@@ -311,7 +311,7 @@ export default function CustomerReviewsPage() {
 function ReviewCard({ review }: { review: ParsedReview }) {
   const initials = review.author.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
   const dateStr = review.date
-    ? new Date(review.date).toLocaleDateString("en-AE", { year: "numeric", month: "short", day: "numeric" })
+    ? new Date(review.date).toLocaleDateString("en-GB", { year: "numeric", month: "short", day: "numeric", timeZone: "Asia/Muscat" })
     : "";
 
   return (

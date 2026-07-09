@@ -39,6 +39,12 @@ export default hydrogenRoutes([
   route('ar/pages/شريك-mls', 'routes/pages.mls-affiliate.tsx', { id: 'ar-pages-affiliate-ar' }),
   route('ar/pages/delivery-info', 'routes/pages.delivery-info.tsx', { id: 'ar-pages-delivery' }),
   route('ar/pages/معلومات-التوصيل', 'routes/pages.delivery-info.tsx', { id: 'ar-pages-delivery-ar' }),
+  // Footer "Store Locations" links to /pages/mls-gourment (a typo in the about-mls menu — the real
+  // page is mls-gourmet). Alias the typo to the same route so it doesn't 404. EN + AR.
+  route('ar/pages/mls-gourment', 'routes/pages.mls-gourmet.tsx', { id: 'ar-pages-mls-gourment-typo' }),
+  // Footer "Privacy Policy" links to the malformed /pages/policies/privacy-policy — redirect it to
+  // the real /policies/:handle. EN + AR (the loader preserves the /ar prefix).
+  route('ar/pages/policies/:handle', 'routes/pages.policies.$handle.tsx', { id: 'ar-pages-policies-redirect' }),
   route('ar/pages/:handle', 'routes/pages.$handle.tsx', { id: 'ar-pages-handle' }),
   route('ar/policies/:handle', 'routes/policies.$handle.tsx', { id: 'ar-policies-handle' }),
   route('ar/*', 'routes/ar.$.tsx'),
@@ -88,6 +94,10 @@ export default hydrogenRoutes([
   route('pages/our-story', 'routes/pages.our-story-new.tsx', { id: 'pages-our-story' }),
   route('pages/mls-affiliate', 'routes/pages.mls-affiliate.tsx'),
   route('pages/delivery-info', 'routes/pages.delivery-info.tsx'),
+  // Typo alias for the footer "Store Locations" link (real page is mls-gourmet).
+  route('pages/mls-gourment', 'routes/pages.mls-gourmet.tsx', { id: 'pages-mls-gourment-typo' }),
+  // Malformed footer "Privacy Policy" link → redirect /pages/policies/<x> to /policies/<x>.
+  route('pages/policies/:handle', 'routes/pages.policies.$handle.tsx', { id: 'pages-policies-redirect' }),
   route('pages/:handle', 'routes/pages.$handle.tsx'),
   route('policies/:handle', 'routes/policies.$handle.tsx'),
   route('account/login', 'routes/account_.login.tsx'),
