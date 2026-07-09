@@ -507,19 +507,27 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
 }
 
 function renderTemplate(suffix: string | null | undefined, props: any) {
-  // Suffixes verified against live Shopify store (807 products, scanned 2026-06-11)
+  // Suffixes verified against live Shopify store (807 products, scanned 2026-06-11).
+  // Oman theme templateSuffix names differ from the UAE ones (singular/plural, hyphenation),
+  // so the Oman variants are included as aliases below (e.g. beef-rub, lamb-rubs, whole-cut,
+  // chicken-rubs, bundlebuilder) — otherwise ~449 Oman products fell back to the Default template.
   switch (suffix) {
     // ── Existing templates ───────────────────────────────────────────────────
-    case "beef-rubs":           return <BeefRubsTemplate {...props} />;
-    case "chicken-rub":         return <ChickenRubsTemplate {...props} />;
-    case "lamb-rub":            return <LambRubsTemplate {...props} />;
+    case "beef-rubs":
+    case "beef-rub":            return <BeefRubsTemplate {...props} />;      // Oman: beef-rub
+    case "chicken-rub":
+    case "chicken-rubs":        return <ChickenRubsTemplate {...props} />;   // Oman: chicken-rubs
+    case "lamb-rub":
+    case "lamb-rubs":           return <LambRubsTemplate {...props} />;      // Oman: lamb-rubs
     case "whole-cuts":
+    case "whole-cut":                                                        // Oman: whole-cut
     case "abu-dhabi-10kg-aus":  return <WholeCutsTemplate {...props} />;
     case "box-collections":
     case "prime-signature-box":
     case "nadeem-s-box":
     case "prime-steak-box":
-    case "bundle-builder":      return <BoxCollectionsTemplate {...props} />;
+    case "bundle-builder":
+    case "bundlebuilder":       return <BoxCollectionsTemplate {...props} />; // Oman: bundlebuilder
     // ── New templates ────────────────────────────────────────────────────────
     case "seasoned-marinades":  return <SeasonedMarinadesTemplate {...props} />;
     case "picanha":
