@@ -94,6 +94,31 @@ export const useLocaleStore = create<LocaleState>()((set) => ({
 
 export const dirFor = (l: Locale): Dir => (l === "ar" ? "rtl" : "ltr");
 
+// Hosts that ARE this store — an absolute URL to one of these is an INTERNAL link and must be
+// converted to a relative path so navigation stays inside the Hydrogen app (client-side SPA)
+// instead of loading the live Shopify (Dawn) theme. Keep in sync with root.tsx INTERNAL_HOSTS.
+const INTERNAL_LINK_HOSTS = new Set([
+  "mls.om",
+  "www.mls.om",
+  "muscat-livestock.myshopify.com",
+  "oman-stagging-8b5e8acd30e934a51e57.o2.myshopify.dev",
+]);
+
+// Turn an absolute internal URL (e.g. a metaobject link field storing "https://mls.om/collections/
+// all-beef") into a relative path. Relative paths and true external URLs are returned unchanged.
+function stripInternalHost(u: string): string {
+  if (!u || u[0] === "/" || u[0] === "#") return u; // already relative / in-page anchor
+  try {
+    const parsed = new URL(u);
+    if (INTERNAL_LINK_HOSTS.has(parsed.hostname)) {
+      return (parsed.pathname || "/") + parsed.search + parsed.hash;
+    }
+    return u; // genuinely external (facebook.com, wa.me, etc.)
+  } catch {
+    return u; // not a parseable URL — assume it's a bare path
+  }
+}
+
 /**
  * Returns a path-prefixer function that prepends /ar/ when locale is Arabic.
  * Reads locale from the root loader (SSR-safe). Falls back to Zustand store
@@ -107,7 +132,9 @@ export function useLocalePath() {
   const locale: Locale = rootData?.locale ?? storeLocale;
 
   return (path: string | null | undefined): string => {
-    const p = path ?? "/";
+    // Normalize absolute internal URLs → relative first, so a link stored as
+    // "https://mls.om/collections/all-beef" navigates within the app (not to the old theme).
+    const p = stripInternalHost(path ?? "/");
     if (locale !== "ar") return p;
     if (p.startsWith("/ar")) return p;
     return `/ar${p.startsWith("/") ? p : `/${p}`}`;

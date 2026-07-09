@@ -222,7 +222,7 @@ const INTERNAL_HOSTS = new Set([
   'muscat-livestock.myshopify.com',
   'mls.om',
   'www.mls.om',
-  // TODO: add the Oman Oxygen preview host (e.g. oman-stagging-xxxx.o2.myshopify.dev) once known.
+  'oman-stagging-8b5e8acd30e934a51e57.o2.myshopify.dev', // Oman Oxygen (staging/production) host
 ]);
 function toPath(u: string): string {
   try {
