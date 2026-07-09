@@ -13,7 +13,7 @@ import {
 } from "react-router";
 import type { LinksFunction, LoaderFunctionArgs, ShouldRevalidateFunctionArgs } from "react-router";
 import { useEffect, useRef, lazy, Suspense } from "react";
-import { useNonce } from "@shopify/hydrogen";
+import { useNonce, Analytics, getShopAnalytics } from "@shopify/hydrogen";
 import styles from "./styles.css?url";
 import { pushDataLayer } from "./lib/dataLayer";
 import mlsLogo from "./assets/mls-logo.png";
@@ -457,6 +457,24 @@ export function shouldRevalidate({ currentUrl, nextUrl }: ShouldRevalidateFuncti
 // ── Loader ────────────────────────────────────────────────────────────────────
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const language = detectLanguage(request);
+
+  // Shopify storefront analytics — WITHOUT this <Analytics.Provider> feed, Shopify's own
+  // dashboards (sessions, online-store conversion, traffic sources) stay empty on a headless
+  // store because nothing sends page_view/product_view to Shopify's Monorail endpoint. Both are
+  // returned in the success AND catch paths so analytics survives a menu/query failure. `shop` is
+  // a promise (streamed); the provider awaits it. This is independent of the GTM/ad-pixel setup.
+  const shop = getShopAnalytics({
+    storefront: context.storefront,
+    publicStorefrontId: context.env.PUBLIC_STOREFRONT_ID,
+  });
+  const consent = {
+    checkoutDomain: context.env.PUBLIC_CHECKOUT_DOMAIN,
+    storefrontAccessToken: context.env.PUBLIC_STOREFRONT_API_TOKEN,
+    withPrivacyBanner: false,
+    country: "OM" as const,
+    language,
+  };
+
   try {
     const [data, adminData] = await Promise.all([
       context.storefront.query(LAYOUT_QUERY, {
@@ -531,7 +549,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     }
 
     const faviconUrl = footerSettings?.faviconUrl ?? null;
-    return { mainMenu, secondaryMenu, mobileMenu, mobileCategoriesMenu, footerSettings, footerMenuCols, announcementMessages, cartDrawerConfig, navItemImages, mobileBanners, faviconUrl, locale: (language === "AR" ? "ar" : "en") as "ar" | "en" };
+    return { mainMenu, secondaryMenu, mobileMenu, mobileCategoriesMenu, footerSettings, footerMenuCols, announcementMessages, cartDrawerConfig, navItemImages, mobileBanners, faviconUrl, locale: (language === "AR" ? "ar" : "en") as "ar" | "en", shop, consent };
   } catch (e) {
     console.error("[root loader]", e);
     return {
@@ -547,6 +565,8 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       mobileCategoriesMenu: [] as NavEntry[],
       faviconUrl: null as string | null,
       locale: "en" as "ar" | "en",
+      shop,
+      consent,
     };
   }
 }
@@ -972,26 +992,32 @@ function MarketingPixels() {
 }
 
 export default function App() {
-  const { mainMenu, secondaryMenu, mobileMenu, mobileCategoriesMenu, footerSettings, footerMenuCols, announcementMessages, navItemImages, mobileBanners } = useLoaderData<typeof loader>();
+  const data = useLoaderData<typeof loader>();
+  const { mainMenu, secondaryMenu, mobileMenu, mobileCategoriesMenu, footerSettings, footerMenuCols, announcementMessages, navItemImages, mobileBanners } = data;
   return (
-    <QueryClientProvider client={queryClient}>
-      <PageLoader />
-      <LocaleSync />
-      <DataLayerRouteTracker />
-      <MarketingPixels />
-      <CartSyncWrapper />
-      <RichpanelWidget />
-      <div className="flex min-h-screen flex-col">
-        <AnnouncementBar messages={announcementMessages} />
-        <Header mainMenu={mainMenu} secondaryMenu={secondaryMenu} navItemImages={navItemImages} mobileBanners={mobileBanners} mobileMenu={mobileMenu} mobileCategoriesMenu={mobileCategoriesMenu} />
-        <main className="flex-1">
-          <Outlet />
-        </main>
-        <Footer settings={footerSettings} menuCols={footerMenuCols} />
-      </div>
-      <CartDrawer />
-      <Suspense fallback={null}><QuickBuyDrawer /></Suspense>
-      <Toaster position="top-center" />
-    </QueryClientProvider>
+    // Analytics.Provider emits page_view / product_view etc. to Shopify (feeds Admin analytics:
+    // sessions, conversion, traffic sources). cart={null} — the cart is managed by the Zustand
+    // store, not Hydrogen's cart context; page/product/collection views drive sessions regardless.
+    <Analytics.Provider cart={null} shop={data.shop} consent={data.consent}>
+      <QueryClientProvider client={queryClient}>
+        <PageLoader />
+        <LocaleSync />
+        <DataLayerRouteTracker />
+        <MarketingPixels />
+        <CartSyncWrapper />
+        <RichpanelWidget />
+        <div className="flex min-h-screen flex-col">
+          <AnnouncementBar messages={announcementMessages} />
+          <Header mainMenu={mainMenu} secondaryMenu={secondaryMenu} navItemImages={navItemImages} mobileBanners={mobileBanners} mobileMenu={mobileMenu} mobileCategoriesMenu={mobileCategoriesMenu} />
+          <main className="flex-1">
+            <Outlet />
+          </main>
+          <Footer settings={footerSettings} menuCols={footerMenuCols} />
+        </div>
+        <CartDrawer />
+        <Suspense fallback={null}><QuickBuyDrawer /></Suspense>
+        <Toaster position="top-center" />
+      </QueryClientProvider>
+    </Analytics.Provider>
   );
 }
