@@ -175,14 +175,20 @@ export function CartDrawer() {
   const shopifySubtotal = subtotalAmount ? parseFloat(subtotalAmount.amount) : localSubtotal;
   const shopifyTotal = totalAmount ? parseFloat(totalAmount.amount) : shopifySubtotal;
 
-  // Discount = the gap between the RAW item subtotal (localSubtotal) and Shopify's final total.
-  // We must use localSubtotal (not subtotalAmount) as the base: for PRODUCT-level discounts
-  // (e.g. "35% off product X") Shopify reduces subtotalAmount ITSELF, so subtotalAmount − total
-  // would be 0 and the discount would never show. localSubtotal is always the pre-discount amount,
-  // so this catches product-level AND order-level discounts. (When there's no discount, shopifyTotal
-  // falls back to localSubtotal → rate 0 → total stays responsive to qty taps.)
-  const discountRate = localSubtotal > 0.01
-    ? Math.max(0, Math.min(1, (localSubtotal - shopifyTotal) / localSubtotal))
+  // Discount RATE is derived from Shopify's OWN time-consistent snapshot — subtotalAmount vs
+  // totalAmount from the SAME API response — NEVER localSubtotal-vs-shopifyTotal. localSubtotal
+  // updates instantly on every qty tap while the Shopify total lags one async mutation behind, so
+  // mixing them fabricated a phantom "discount" (the gap between the NEW qty's subtotal and the
+  // OLD qty's total → e.g. a fake ~50% off that shifts on every tap and never reaches checkout).
+  // Using Shopify's own pair keeps both values in the same time frame: when Shopify reports no
+  // discount, subtotal === total → rate 0 → no phantom. The rate is then applied to the live
+  // localSubtotal so the Total still responds instantly to qty taps and scales % discounts.
+  // NOTE: this previews ORDER-level discounts. Product-level automatic discounts (which Shopify
+  // bakes into subtotalAmount itself, so subtotal === total) won't preview in the cart but DO
+  // apply at checkout — an acceptable trade-off, and far safer than showing a discount that
+  // checkout won't honor.
+  const discountRate = shopifySubtotal > 0.01
+    ? Math.max(0, Math.min(1, (shopifySubtotal - shopifyTotal) / shopifySubtotal))
     : 0;
   const discountGap = Math.max(0, localSubtotal * discountRate);
   const optimisticTotal = Math.max(0, localSubtotal - discountGap);
