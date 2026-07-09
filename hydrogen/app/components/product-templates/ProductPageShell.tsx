@@ -361,7 +361,6 @@ function DeliveryRow({ label, children }: { label: string; children: React.React
 }
 
 function DeliveryTab({ pageSettings }: { pageSettings: PageSettings | undefined }) {
-  const t = useT();
   const [cityIdx, setCityIdx] = useState(0);
 
   type CityBlock = { label: string; body: string };
@@ -391,11 +390,6 @@ function DeliveryTab({ pageSettings }: { pageSettings: PageSettings | undefined 
 
       {/* Delivery by city */}
       <section>
-        <h3 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] text-crimson">
-          <Truck className="h-3.5 w-3.5" />
-          {pageSettings?.deliveryTitle ?? t("product.delivery_info_title")}
-        </h3>
-
         {/* City tabs — crimson pill active */}
         <div className="mb-4 overflow-x-auto sm:mb-5">
           <div className="flex min-w-max gap-1 rounded-lg border border-border p-0.5 sm:p-1">
