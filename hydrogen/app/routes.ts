@@ -30,6 +30,10 @@ export default hydrogenRoutes([
   route('ar/pages/mls-gourmet', 'routes/pages.mls-gourmet.tsx', { id: 'ar-pages-gourmet' }),
   route('ar/pages/إم-إل-إس-جورميه', 'routes/pages.mls-gourmet.tsx', { id: 'ar-pages-gourmet-ar' }),
   route('ar/pages/our-story-new', 'routes/pages.our-story-new.tsx', { id: 'ar-pages-our-story' }),
+  // Nav links "Our Story" to /pages/our-story → /ar/pages/our-story in Arabic. Without this it
+  // fell to the generic ar/pages/:handle handler and rendered an empty page body (the real
+  // content is in the mls_our_story_page metaobject). Mirror the English pages/our-story route.
+  route('ar/pages/our-story', 'routes/pages.our-story-new.tsx', { id: 'ar-pages-our-story-plain' }),
   route('ar/pages/قصتنا-جديدة', 'routes/pages.our-story-new.tsx', { id: 'ar-pages-our-story-ar' }),
   route('ar/pages/mls-affiliate', 'routes/pages.mls-affiliate.tsx', { id: 'ar-pages-affiliate' }),
   route('ar/pages/شريك-mls', 'routes/pages.mls-affiliate.tsx', { id: 'ar-pages-affiliate-ar' }),
