@@ -998,7 +998,7 @@ export default function App() {
     // Analytics.Provider emits page_view / product_view etc. to Shopify (feeds Admin analytics:
     // sessions, conversion, traffic sources). cart={null} — the cart is managed by the Zustand
     // store, not Hydrogen's cart context; page/product/collection views drive sessions regardless.
-    <Analytics.Provider cart={null} shop={data.shop} consent={data.consent}>
+    <Analytics.Provider cart={null} shop={data.shop} consent={data.consent} canTrack={() => true}>
       <QueryClientProvider client={queryClient}>
         <PageLoader />
         <LocaleSync />
