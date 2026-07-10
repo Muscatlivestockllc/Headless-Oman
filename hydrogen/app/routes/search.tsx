@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@shopify/remix-oxygen";
 import { useLoaderData } from "react-router";
+import { Analytics } from "@shopify/hydrogen";
 import { SearchAutosuggest } from "~/components/layout/SearchAutosuggest";
 import { ProductCard } from "~/components/product/ProductCard";
 import type { ShopifyProduct } from "~/lib/shopify";
@@ -82,6 +83,8 @@ export default function Search() {
 
   return (
     <main className="container mx-auto px-4 py-8">
+      {/* Shopify search_viewed → search analytics (top searches). Render-only, fires on an actual query. */}
+      {q && <Analytics.SearchView data={{ searchTerm: q }} />}
       <div className="mb-8">
         <h1 className="mb-4 font-display text-2xl font-extrabold md:text-3xl">
           {q ? (
