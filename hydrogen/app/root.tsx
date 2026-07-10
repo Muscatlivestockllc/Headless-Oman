@@ -467,8 +467,17 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     storefront: context.storefront,
     publicStorefrontId: context.env.PUBLIC_STOREFRONT_ID,
   });
+  // The Customer Privacy API writes the visitor-consent cookie on the ROOT of checkoutDomain.
+  // The env value (muscat-livestock.myshopify.com) has root .myshopify.com, which the live site
+  // (mls.om) can't read back — so the API reports "failed" and analytics runs degraded. On the
+  // production domain the Shopify-served checkout is checkout.mls.om (root .mls.om, shared with the
+  // storefront), so consent persists correctly. Fall back to the env value on staging/preview.
+  const reqHost = new URL(request.url).hostname;
+  const consentCheckoutDomain = /(^|\.)mls\.om$/i.test(reqHost)
+    ? "checkout.mls.om"
+    : context.env.PUBLIC_CHECKOUT_DOMAIN;
   const consent = {
-    checkoutDomain: context.env.PUBLIC_CHECKOUT_DOMAIN,
+    checkoutDomain: consentCheckoutDomain,
     storefrontAccessToken: context.env.PUBLIC_STOREFRONT_API_TOKEN,
     withPrivacyBanner: false,
     country: "OM" as const,
