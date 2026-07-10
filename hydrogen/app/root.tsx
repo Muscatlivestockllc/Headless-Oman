@@ -12,8 +12,16 @@ import {
   isRouteErrorResponse,
 } from "react-router";
 import type { LinksFunction, LoaderFunctionArgs, ShouldRevalidateFunctionArgs } from "react-router";
-import { useEffect, useRef, useMemo, lazy, Suspense } from "react";
-import { useNonce, Analytics, getShopAnalytics } from "@shopify/hydrogen";
+import { useEffect, useRef, lazy, Suspense } from "react";
+import {
+  useNonce,
+  Analytics,
+  getShopAnalytics,
+  useAnalytics,
+  sendShopifyAnalytics,
+  AnalyticsEventName,
+  getClientBrowserParameters,
+} from "@shopify/hydrogen";
 import styles from "./styles.css?url";
 import { pushDataLayer } from "./lib/dataLayer";
 import mlsLogo from "./assets/mls-logo.png";
@@ -1011,62 +1019,74 @@ function MarketingPixels() {
   return null;
 }
 
-// Canonical cart analytics: build a Shopify-cart-shaped object from the Zustand store and pass it
-// to <Analytics.Provider cart>. Hydrogen's own CartAnalytics then diffs lines (by id + quantity) and
-// publishes cart_updated / product_added_to_cart / product_removed_from_cart FROM ITS OWN useEffect —
-// the same internal path page_view uses (so it actually fires, unlike a manual publish). A wrapper
-// keeps this subscription local: `children` come from App (which doesn't subscribe to the cart), so
-// only this component + the provider re-render on cart changes, not the whole tree.
-function AnalyticsWithCart({
-  shop,
-  consent,
-  children,
-}: {
-  shop: unknown;
-  consent: unknown;
-  children: React.ReactNode;
-}) {
-  const cartItems = useCartStore((s) => s.items);
+// Sends Shopify's product_added_to_cart DIRECTLY to Monorail, bypassing Hydrogen's event pipeline.
+//
+// Why: sendShopifyAnalytics() begins with `if (!payload.hasUserConsent) return` — a SILENT no-op.
+// Hydrogen derives hasUserConsent from customerPrivacy.analyticsProcessingAllowed(), which is false
+// on this store (Oman needs no consent banner, so consent is never explicitly granted). That single
+// line is why NO Hydrogen analytics event ever reached Monorail — no beacon, no error. Sessions come
+// from the consent script's own separate telemetry, not Hydrogen.
+//
+// We call sendShopifyAnalytics ourselves with hasUserConsent: true (lawful here — Oman has no
+// cookie-consent requirement). The provider keeps cart={null} so Hydrogen's own CartAnalytics can't
+// also fire this event and double-count. Read-only w.r.t. the cart; gifts (price 0) and pending
+// lines are skipped, and the initial hydration pass is ignored.
+function CartAddDirectAnalytics() {
+  const items = useCartStore((s) => s.items);
   const cartId = useCartStore((s) => s.cartId);
-  const analyticsCart = useMemo(() => {
-    if (!cartId) return null;
-    const lines = cartItems
-      .filter((i) => i.lineId && !i.isPending)
-      .map((i) => {
-        const node = (i.product?.node ?? {}) as any;
-        return {
-          id: i.lineId,
-          quantity: i.quantity,
-          merchandise: {
-            id: i.variantId,
-            title: i.variantTitle ?? "",
-            sku: "",
-            price: { amount: i.price?.amount ?? "0", currencyCode: i.price?.currencyCode ?? "OMR" },
-            product: {
-              id: node.id ?? "",
-              title: node.title ?? "",
-              vendor: node.vendor ?? "",
-              productType: node.productType ?? "",
-            },
-          },
-        };
-      });
-    // Content-based updatedAt: changes when the lines change, but stable across reloads so
-    // Hydrogen's localStorage dedup doesn't fire false "added" events on every refresh.
-    const updatedAt = lines.length ? lines.map((l) => `${l.id}:${l.quantity}`).join("|") : "empty";
-    return { id: cartId, updatedAt, lines: { nodes: lines } };
-  }, [cartItems, cartId]);
+  const { shop } = useAnalytics();
+  const prevQtyRef = useRef<Map<string, number> | null>(null);
 
-  return (
-    <Analytics.Provider
-      cart={analyticsCart as never}
-      shop={shop as never}
-      consent={consent as never}
-      canTrack={() => true}
-    >
-      {children}
-    </Analytics.Provider>
-  );
+  useEffect(() => {
+    const cur = new Map<string, number>();
+    for (const i of items) {
+      if (i.lineId && !i.isPending && parseFloat(i.price?.amount ?? "0") > 0) cur.set(i.lineId, i.quantity);
+    }
+    const prev = prevQtyRef.current;
+    prevQtyRef.current = cur;
+
+    const s = shop as { shopId?: string } | null;
+    if (prev === null || !cartId || !s?.shopId) return; // skip initial hydration / not ready
+
+    for (const i of items) {
+      if (!i.lineId || i.isPending) continue;
+      const unitPrice = parseFloat(i.price?.amount ?? "0");
+      if (unitPrice <= 0) continue; // skip free gifts
+      const added = i.quantity - (prev.get(i.lineId) ?? 0);
+      if (added <= 0) continue; // only adds / quantity increases
+
+      const node = (i.product?.node ?? {}) as any;
+      try {
+        void sendShopifyAnalytics({
+          eventName: AnalyticsEventName.ADD_TO_CART,
+          payload: {
+            ...(s as object),
+            shopifySalesChannel: "hydrogen",
+            hasUserConsent: true,
+            ...getClientBrowserParameters(),
+            cartId,
+            totalValue: unitPrice * added,
+            products: [
+              {
+                productGid: node.id ?? "",
+                variantGid: i.variantId,
+                name: node.title ?? "",
+                variantName: i.variantTitle ?? "",
+                brand: node.vendor ?? "",
+                price: i.price?.amount ?? "0",
+                quantity: added,
+                category: node.productType ?? "",
+              },
+            ],
+          } as never,
+        });
+      } catch {
+        /* analytics must never affect the cart */
+      }
+    }
+  }, [items, cartId, shop]);
+
+  return null;
 }
 
 // Oman has no cookie-consent legal requirement, so Shopify shows no banner and auto-resolves
@@ -1107,16 +1127,17 @@ export default function App() {
   const data = useLoaderData<typeof loader>();
   const { mainMenu, secondaryMenu, mobileMenu, mobileCategoriesMenu, footerSettings, footerMenuCols, announcementMessages, navItemImages, mobileBanners } = data;
   return (
-    // AnalyticsWithCart wraps Analytics.Provider and feeds it the Zustand cart so Hydrogen emits the
-    // full funnel to Shopify: page_view + product/collection/search views + cart_updated /
-    // product_added_to_cart / product_removed_from_cart (all from Hydrogen's own lifecycle).
-    <AnalyticsWithCart shop={data.shop} consent={data.consent}>
+    // cart={null}: add-to-cart is sent directly by <CartAddDirectAnalytics/> (Hydrogen's own cart
+    // analytics can't send — see the hasUserConsent gate documented there), so leaving cart null
+    // prevents any chance of double-counting.
+    <Analytics.Provider cart={null} shop={data.shop} consent={data.consent} canTrack={() => true}>
       <QueryClientProvider client={queryClient}>
         <PageLoader />
         <LocaleSync />
         <DataLayerRouteTracker />
         <MarketingPixels />
         <GrantTrackingConsent />
+        <CartAddDirectAnalytics />
         <CartSyncWrapper />
         <RichpanelWidget />
         <div className="flex min-h-screen flex-col">
@@ -1131,6 +1152,6 @@ export default function App() {
         <Suspense fallback={null}><QuickBuyDrawer /></Suspense>
         <Toaster position="top-center" />
       </QueryClientProvider>
-    </AnalyticsWithCart>
+    </Analytics.Provider>
   );
 }
