@@ -13,7 +13,7 @@ import {
 } from "react-router";
 import type { LinksFunction, LoaderFunctionArgs, ShouldRevalidateFunctionArgs } from "react-router";
 import { useEffect, useRef, lazy, Suspense } from "react";
-import { useNonce, Analytics, getShopAnalytics } from "@shopify/hydrogen";
+import { useNonce, Analytics, getShopAnalytics, useAnalytics } from "@shopify/hydrogen";
 import styles from "./styles.css?url";
 import { pushDataLayer } from "./lib/dataLayer";
 import mlsLogo from "./assets/mls-logo.png";
@@ -30,7 +30,7 @@ const QuickBuyDrawer = lazy(() =>
 );
 import { Toaster } from "./components/ui/sonner";
 import { useCartSync } from "./hooks/useCartSync";
-import { useCartStore } from "./stores/cartStore";
+import { useCartStore, setCartAddPublish } from "./stores/cartStore";
 import { useLocaleStore, dirFor } from "./stores/localeStore";
 import { detectLanguage } from "./lib/locale";
 import { applyArImages } from "./lib/arImages";
@@ -1009,6 +1009,25 @@ function MarketingPixels() {
   return null;
 }
 
+// Bridges the Zustand cart's add-to-cart into Shopify analytics. useAnalytics() only works inside
+// <Analytics.Provider>, so this render-null component (mounted there) hands publish + shop to the
+// cart store via setCartAddPublish. See fireAddToCartAnalytics in stores/cartStore.ts.
+function CartAddAnalyticsBridge() {
+  const { publish, shop, customData } = useAnalytics();
+  useEffect(() => {
+    const pub = publish as unknown as (e: string, p: Record<string, unknown>) => void;
+    setCartAddPublish((payload) => {
+      try {
+        pub("product_added_to_cart", { ...payload, shop, customData });
+      } catch {
+        /* noop — analytics must never surface an error to the cart */
+      }
+    });
+    return () => setCartAddPublish(null);
+  }, [publish, shop, customData]);
+  return null;
+}
+
 export default function App() {
   const data = useLoaderData<typeof loader>();
   const { mainMenu, secondaryMenu, mobileMenu, mobileCategoriesMenu, footerSettings, footerMenuCols, announcementMessages, navItemImages, mobileBanners } = data;
@@ -1022,6 +1041,7 @@ export default function App() {
         <LocaleSync />
         <DataLayerRouteTracker />
         <MarketingPixels />
+        <CartAddAnalyticsBridge />
         <CartSyncWrapper />
         <RichpanelWidget />
         <div className="flex min-h-screen flex-col">
