@@ -479,7 +479,16 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const consent = {
     checkoutDomain: consentCheckoutDomain,
     storefrontAccessToken: context.env.PUBLIC_STOREFRONT_API_TOKEN,
-    withPrivacyBanner: false,
+    // Docs default + recommended for headless (Shopify useCustomerPrivacy reference). Loads
+    // Shopify's native consent script. With privacy-settings automation ON in admin, Shopify
+    // auto-grants consent where no banner is required (Oman) and fires visitorConsentCollected —
+    // which is what flips the analytics subscriber "ready" so page_view/product_view actually
+    // flush to Monorail. Previously false, which relied on an onReady path that never fired on the
+    // custom domain → zero beacons.
+    withPrivacyBanner: true,
+    // mls.om is a custom domain, NOT a Shopify Storefront-API proxy, so force the consent API to
+    // use the checkout domain (checkout.mls.om) rather than same-origin (which hits Oxygen → fails).
+    sameDomainForStorefrontApi: false,
     country: "OM" as const,
     language,
   };
