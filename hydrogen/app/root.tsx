@@ -659,8 +659,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: `!function(){if(!window.klaviyo){window._klOnsite=window._klOnsite||[];try{window.klaviyo=new Proxy({},{get:function(n,i){return"push"===i?function(){var n;(n=window._klOnsite).push.apply(n,arguments)}:function(){for(var n=arguments.length,o=new Array(n),w=0;w<n;w++)o[w]=arguments[w];var t="function"==typeof o[o.length-1]?o.pop():void 0,e=new Promise((function(n){window._klOnsite.push([i].concat(o,[function(i){t&&t(i),n(i)}]))}));return e}}})}catch(n){window.klaviyo=window.klaviyo||[],window.klaviyo.push=function(){var n;(n=window._klOnsite).push.apply(n,arguments)}}}}();` }} />
         {/* Klaviyo Onsite JS — handles forms, page tracking, identify */}
         <script async src="https://static.klaviyo.com/onsite/js/SC5Mtp/klaviyo.js" />
-        {/* Microsoft Clarity — REMOVED: the Oman live site does not use Clarity (the
-            previous tag was the UAE store's). Re-add here if an Oman Clarity project is set up. */}
+        {/* Microsoft Clarity (Oman project w4bzbv3psg — "Muscat Livestock", mls.om) — heatmaps +
+            session recording on the storefront. CSP already allows www.clarity.ms / *.clarity.ms. */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","w4bzbv3psg");` }} />
+
         {/* PushOwl + Brevo — web push notifications */}
         {/* Shim window.Shopify so PushOwl can identify the store in headless mode */}
         <script dangerouslySetInnerHTML={{ __html: `window.Shopify=window.Shopify||{};window.Shopify.shop=window.Shopify.shop||'muscat-livestock.myshopify.com';` }} />
