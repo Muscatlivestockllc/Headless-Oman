@@ -1,9 +1,7 @@
-import { useState } from "react";
 import { Link } from "react-router";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import logo from "@/assets/mls-logo.png";
 import { useLocalePath } from "@/stores/localeStore";
-import { useT } from "@/i18n/strings";
 import {
   Accordion,
   AccordionContent,
@@ -71,6 +69,21 @@ export function Footer({ settings, menuCols }: Props) {
 
   return (
     <footer className="bg-gradient-footer text-charcoal-foreground">
+      {/* Blend the Klaviyo Footer-signup embed into the dark footer: light text, a clean white
+          input + crimson button, and a sane font size (its default text renders oversized). */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .klaviyo-embed .klaviyo-form-TXvrLy * { font-size: 15px !important; line-height: 1.5 !important; color: #ffffff !important; background: transparent !important; box-shadow: none !important; }
+        .klaviyo-embed .klaviyo-form-TXvrLy h1,
+        .klaviyo-embed .klaviyo-form-TXvrLy h2,
+        .klaviyo-embed .klaviyo-form-TXvrLy h3,
+        .klaviyo-embed .klaviyo-form-TXvrLy h4 { font-size: 18px !important; line-height: 1.3 !important; margin: 0 0 6px !important; }
+        .klaviyo-embed .klaviyo-form-TXvrLy input,
+        .klaviyo-embed .klaviyo-form-TXvrLy input[type="email"],
+        .klaviyo-embed .klaviyo-form-TXvrLy input[type="text"] { color: #1a1a1a !important; background: #ffffff !important; }
+        .klaviyo-embed .klaviyo-form-TXvrLy input::placeholder { color: #6b7280 !important; }
+        .klaviyo-embed .klaviyo-form-TXvrLy button,
+        .klaviyo-embed .klaviyo-form-TXvrLy [type="submit"] { color: #ffffff !important; background: #8B0000 !important; }
+      ` }} />
       {/* Subtle gold gradient hairline accent at the very top of the footer */}
       <div className="h-px w-full bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
       <div className="container mx-auto px-4 py-12">
@@ -234,80 +247,19 @@ function NewsletterCol({ title, subtitle }: { title: string; subtitle: string })
   );
 }
 
-// Klaviyo "Footer-signup" embed form. The Klaviyo Onsite JS (loaded in root.tsx for the SC5Mtp
-// account) scans the page for this class and renders the form in place. dangerouslySetInnerHTML
-// with a constant + suppressHydrationWarning keeps React from wiping the markup Klaviyo injects.
-// Native newsletter signup — subscribes to the Klaviyo "Footer-signup" list via the public client
-// API (see app/routes/api.newsletter-subscribe.tsx). Always renders an email input, unlike the
-// Klaviyo embed which depends on the on-site JS + the form's domain targeting.
-function NewsletterForm() {
-  const t = useT();
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [message, setMessage] = useState("");
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (status === "loading") return;
-    setStatus("loading");
-    setMessage("");
-    try {
-      const res = await fetch("/api/newsletter-subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = (await res.json()) as { success?: boolean; error?: string };
-      if (res.ok && data.success) {
-        setStatus("success");
-        setMessage(t("footer.subscribe_success"));
-        setEmail("");
-      } else {
-        setStatus("error");
-        setMessage(data.error || t("footer.subscribe_error"));
-      }
-    } catch {
-      setStatus("error");
-      setMessage(t("footer.subscribe_network_error"));
-    }
-  }
-
-  if (status === "success") {
-    return <p className="text-sm font-medium text-green-400">{message}</p>;
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="w-full">
-      <div className="flex overflow-hidden rounded-md">
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder={t("footer.email_ph")}
-          aria-label="Email address"
-          className="min-w-0 flex-1 bg-white px-4 py-2.5 text-sm text-charcoal placeholder:text-charcoal/50 focus:outline-none"
-        />
-        <button
-          type="submit"
-          disabled={status === "loading"}
-          className="shrink-0 bg-crimson px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-crimson-foreground transition-colors hover:bg-rich-red disabled:opacity-60"
-        >
-          {status === "loading" ? "…" : t("footer.subscribe")}
-        </button>
-      </div>
-      {status === "error" && <p className="mt-2 text-xs text-red-400">{message}</p>}
-    </form>
-  );
-}
-
-// Footer newsletter — the native <NewsletterForm/> ONLY. It subscribes to the Klaviyo
-// "Footer-signup" list (VkBYRU) via app/routes/api.newsletter-subscribe.tsx and always renders,
-// regardless of Klaviyo's on-site JS / form domain targeting. We previously ALSO rendered the
-// Klaviyo on-site embed (klaviyo-form-TXvrLy) with a fallback timer, but the embed and the native
-// form could both show at once → a duplicate signup box in the footer. One reliable form now.
+// Footer newsletter — the Klaviyo "Footer-signup" embed ONLY (Oman account SC5Mtp / form TXvrLy).
+// Klaviyo's on-site JS (loaded in root.tsx) scans the page for this class and renders the form in
+// place; suppressHydrationWarning + a constant dangerouslySetInnerHTML keeps React from wiping the
+// markup Klaviyo injects. Only this one embed renders — no native fallback — so there's never a
+// duplicate signup box. Styling for the dark footer lives in the <style> block above.
 function FooterNewsletter() {
-  return <NewsletterForm />;
+  return (
+    <div
+      className="klaviyo-embed"
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: '<div class="klaviyo-form-TXvrLy"></div>' }}
+    />
+  );
 }
 
 function WhatsAppIcon({ className }: { className?: string }) {
