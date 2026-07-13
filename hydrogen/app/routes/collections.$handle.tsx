@@ -270,7 +270,7 @@ function CollectionDescription({ html }: { html: string }) {
   }, [html]);
 
   return (
-    <div className="mx-auto mt-3 max-w-2xl text-left">
+    <div className="mx-auto mt-3 max-w-2xl text-center">
       <div
         ref={ref}
         className={`prose prose-sm prose-neutral dark:prose-invert max-w-none text-muted-foreground transition-all [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_li]:mb-1 ${!expanded ? "max-h-20 overflow-hidden" : ""}`}
