@@ -346,14 +346,18 @@ function parseFreeGiftRules(nodes: any[]) {
     .filter(Boolean);
 }
 
-function parseAnnouncementMessages(nodes: any[]): string[] {
+function parseAnnouncementMessages(nodes: any[]): { messages: string[]; scrollSeconds: number | null } {
   const node = nodes[0];
-  if (!node) return [];
+  if (!node) return { messages: [], scrollSeconds: null };
   const f = Object.fromEntries(node.fields.map((x: any) => [x.key, x]));
-  return [
+  const messages = [
     f.message_1?.value, f.message_2?.value, f.message_3?.value,
     f.message_4?.value, f.message_5?.value,
   ].filter((m): m is string => typeof m === "string" && m.trim().length > 0);
+  // scroll_seconds: higher = slower. Clamp to a sane range; null = use the CSS default (25s).
+  const raw = parseInt(f.scroll_seconds?.value ?? "", 10);
+  const scrollSeconds = Number.isFinite(raw) && raw > 0 ? Math.min(120, Math.max(5, raw)) : null;
+  return { messages, scrollSeconds };
 }
 
 export interface MobileMenuSubItem {
@@ -517,7 +521,9 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     const secondaryMenu          = parseShopifyMenu(data?.secondaryMenu,         "secondary");
     const mobileCategoriesMenu   = parseShopifyMenu(data?.mobileCategoriesMenu,  "mobile-cat");
     const footerSettings = parseFooterSettings(adminData?.footerSettings?.nodes ?? []);
-    const announcementMessages = parseAnnouncementMessages(adminData?.announcementBar?.nodes ?? []);
+    const announcement = parseAnnouncementMessages(adminData?.announcementBar?.nodes ?? []);
+    const announcementMessages = announcement.messages;
+    const announcementScrollSeconds = announcement.scrollSeconds;
     const cartDrawerConfig = {
       ...parseCartDrawerConfig(adminData?.cartDrawer?.nodes ?? []),
       freeGiftRules: parseFreeGiftRules(adminData?.freeGiftRules?.nodes ?? []),
@@ -575,7 +581,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     }
 
     const faviconUrl = footerSettings?.faviconUrl ?? null;
-    return { mainMenu, secondaryMenu, mobileMenu, mobileCategoriesMenu, footerSettings, footerMenuCols, announcementMessages, cartDrawerConfig, navItemImages, mobileBanners, faviconUrl, locale: (language === "AR" ? "ar" : "en") as "ar" | "en", shop, consent };
+    return { mainMenu, secondaryMenu, mobileMenu, mobileCategoriesMenu, footerSettings, footerMenuCols, announcementMessages, announcementScrollSeconds, cartDrawerConfig, navItemImages, mobileBanners, faviconUrl, locale: (language === "AR" ? "ar" : "en") as "ar" | "en", shop, consent };
   } catch (e) {
     console.error("[root loader]", e);
     return {
@@ -584,6 +590,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       footerSettings: null as FooterSettings | null,
       footerMenuCols: [] as { heading: string; links: FooterLink[] }[],
       announcementMessages: [] as string[],
+      announcementScrollSeconds: null as number | null,
       cartDrawerConfig: { freeShippingThreshold: 350, deliveryItems: [], freeGiftSubVariantId: "", freeGiftCarVariantId: "", freeGiftRules: [] },
       navItemImages: {} as Record<string, string>,
       mobileBanners: [] as MobileBanner[],
@@ -1125,7 +1132,7 @@ function GrantTrackingConsent() {
 
 export default function App() {
   const data = useLoaderData<typeof loader>();
-  const { mainMenu, secondaryMenu, mobileMenu, mobileCategoriesMenu, footerSettings, footerMenuCols, announcementMessages, navItemImages, mobileBanners } = data;
+  const { mainMenu, secondaryMenu, mobileMenu, mobileCategoriesMenu, footerSettings, footerMenuCols, announcementMessages, announcementScrollSeconds, navItemImages, mobileBanners } = data;
   return (
     // cart={null}: add-to-cart is sent directly by <CartAddDirectAnalytics/> (Hydrogen's own cart
     // analytics can't send — see the hasUserConsent gate documented there), so leaving cart null
@@ -1141,7 +1148,7 @@ export default function App() {
         <CartSyncWrapper />
         <RichpanelWidget />
         <div className="flex min-h-screen flex-col">
-          <AnnouncementBar messages={announcementMessages} />
+          <AnnouncementBar messages={announcementMessages} scrollSeconds={announcementScrollSeconds ?? undefined} />
           <Header mainMenu={mainMenu} secondaryMenu={secondaryMenu} navItemImages={navItemImages} mobileBanners={mobileBanners} mobileMenu={mobileMenu} mobileCategoriesMenu={mobileCategoriesMenu} />
           <main className="flex-1">
             <Outlet />
