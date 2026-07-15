@@ -169,6 +169,7 @@ const PRODUCT_QUERY = `#graphql
             referenceValue
           }
           metafields(identifiers: [
+            {namespace: "custom", key: "price_per_variant_kg"}
             {namespace: "custom", key: "per_kg_price"}
             {namespace: "custom", key: "price_per_kg"}
             {namespace: "custom", key: "portion_text"}

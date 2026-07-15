@@ -1298,9 +1298,11 @@ export function ProductPageShell({
                 return pricePerKgLine(`${formatPrice(unitPrice.amount, unitPrice.currencyCode)} / ${unit}`);
               }
 
-              // 2. Custom metafield price_per_kg or per_kg_price on the variant
-              // Value may be a plain number ("96") or pre-formatted ("OMR 96")
+              // 2. Custom metafield on the variant — the store uses `price_per_variant_kg`
+              // (pre-formatted, e.g. "OMR 10"); price_per_kg / per_kg_price are legacy fallbacks.
+              // Value may be a plain number ("96") or pre-formatted ("OMR 96").
               const metaPerKg =
+                (variant as any)?.metafields?.find((m: any) => m?.key === "price_per_variant_kg")?.value ??
                 (variant as any)?.metafields?.find((m: any) => m?.key === "price_per_kg")?.value ??
                 (variant as any)?.metafields?.find((m: any) => m?.key === "per_kg_price")?.value;
               if (metaPerKg?.trim()) {
