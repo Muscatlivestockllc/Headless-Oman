@@ -39,7 +39,7 @@ const QuickBuyDrawer = lazy(() =>
 import { Toaster } from "./components/ui/sonner";
 import { useCartSync } from "./hooks/useCartSync";
 import { useCartStore } from "./stores/cartStore";
-import { klaviyoAddedToCart } from "./lib/klaviyo";
+import { klaviyoAddedToCart, KlaviyoIdentify } from "./lib/klaviyo";
 import { ShopifyPageView } from "./lib/shopifyAnalytics";
 import { useLocaleStore, dirFor } from "./stores/localeStore";
 import { detectLanguage } from "./lib/locale";
@@ -1182,6 +1182,7 @@ export default function App() {
         <MarketingPixels />
         <GrantTrackingConsent />
         <ShopifyPageView />
+        <KlaviyoIdentify />
         <CartAddDirectAnalytics />
         <CartSyncWrapper />
         <RichpanelWidget />

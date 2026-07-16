@@ -36,6 +36,40 @@ export function klaviyoTrackViewedItem(item: Record<string, unknown>): void {
 }
 
 /**
+ * Identifies the logged-in customer to Klaviyo so their Viewed Product / Added to Cart events
+ * actually send. Klaviyo's onsite SDK HOLDS custom events for anonymous visitors and only sends
+ * them once a profile is known (verified: anonymous track → no network call; after identify →
+ * POST /client/events/ fires). Newsletter-form signups and click-throughs from Klaviyo emails
+ * (_kx) already identify; this covers logged-in account customers too.
+ *
+ * Reads the existing /apps/loggedincustomer route (returns { logged_in, email, name }). Runs once
+ * per load, fully guarded so it can never break the page.
+ */
+export function KlaviyoIdentify() {
+  const done = useRef(false);
+  useEffect(() => {
+    if (done.current) return;
+    done.current = true;
+    (async () => {
+      try {
+        const res = await fetch("/apps/loggedincustomer", { headers: { accept: "application/json" } });
+        if (!res.ok) return;
+        const data = (await res.json()) as { logged_in?: boolean; email?: string; name?: string };
+        if (!data?.logged_in || !data.email) return;
+        const parts = String(data.name ?? "").trim().split(/\s+/).filter(Boolean);
+        const traits: Record<string, string> = { email: data.email };
+        if (parts.length) traits.first_name = parts[0];
+        if (parts.length > 1) traits.last_name = parts.slice(1).join(" ");
+        push(["identify", traits]);
+      } catch {
+        /* Klaviyo identify must never affect the storefront */
+      }
+    })();
+  }, []);
+  return null;
+}
+
+/**
  * Fires Klaviyo "Viewed Product" (+ trackViewedItem) once per product page.
  * Enables Browse Abandonment flows. Render on the product route.
  */
