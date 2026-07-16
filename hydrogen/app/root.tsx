@@ -668,6 +668,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
             gtm.js loads on first interaction OR a 4s fallback (guaranteed), keeping it off the
             critical path. The Meta/TikTok/Snapchat ad pixels below are NOT deferred. */}
         <script dangerouslySetInnerHTML={{ __html: `(function(w,d){w.dataLayer=w.dataLayer||[];w.dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});var done=false,t;function L(){var j=d.createElement('script');j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id=GTM-MNFBCW5';d.head.appendChild(j);}var evts=['scroll','touchstart','mousedown','keydown','mousemove'];function R(){if(done)return;done=true;clearTimeout(t);evts.forEach(function(e){w.removeEventListener(e,R)});L();}evts.forEach(function(e){w.addEventListener(e,R,{passive:true})});t=setTimeout(R,4000);})(window,document);` }} />
+        {/* GA4 ecommerce — headless storefront. GTM (above) sends page_view to GA4 (G-TMJJERF7PS)
+            but has no ecommerce event tags, so view_item/add_to_cart never reached GA4. We load an
+            ISOLATED gtag (its own dataLayer 'mlsGa4dl', send_page_view:false so it can NOT double the
+            GTM page_view) and forward the ecommerce events to it from dataLayer.ts (fireGA4). Shares
+            the _ga cookie with GTM's GA4 → same session, no split. Exposed as window.__mlsGtag. */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){window.mlsGa4dl=window.mlsGa4dl||[];function gtag(){window.mlsGa4dl.push(arguments);}window.__mlsGtag=gtag;gtag('js',new Date());gtag('config','G-TMJJERF7PS',{send_page_view:false});var s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id=G-TMJJERF7PS&l=mlsGa4dl';document.head.appendChild(s);})();` }} />
         {/* ── Ad pixels (Meta / TikTok / Snapchat) ──────────────────────────────────
              Now wired via the <MarketingPixels/> component (injected after hydration, like the
              UAE site). At go-live, just fill the Oman IDs in the PIXEL_IDS constant near App() —

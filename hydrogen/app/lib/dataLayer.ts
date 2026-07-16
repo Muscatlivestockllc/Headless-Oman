@@ -14,6 +14,29 @@ export function pushDataLayer(event: string, data: Record<string, any> = {}) {
   }
   // Mirror the same events to the ad pixels (Meta / TikTok / Snapchat) loaded in root.tsx.
   firePixels(event, data);
+  // …and forward ecommerce events to GA4 directly (GTM has no GA4 ecommerce tags on the headless
+  // storefront). Uses the isolated gtag (window.__mlsGtag) loaded in root.tsx.
+  fireGA4(event, data);
+}
+
+// Send GA4 ecommerce events (view_item / add_to_cart / begin_checkout) via the isolated gtag from
+// root.tsx. page_view stays with GTM's GA4 config (this gtag has send_page_view:false), so no double
+// counting. The dataLayer items are already in GA4 shape (item_id/item_name/price/quantity).
+function fireGA4(event: string, data: Record<string, any>) {
+  try {
+    if (typeof window === "undefined") return;
+    const g = (window as any).__mlsGtag;
+    if (typeof g !== "function") return;
+    if (event !== "view_item" && event !== "add_to_cart" && event !== "begin_checkout") return;
+    const ec = (data && data.ecommerce) || {};
+    const items: any[] = Array.isArray(ec.items) ? ec.items : [];
+    const rawCurrency = String(ec.currency || "OMR").trim().toUpperCase();
+    const currency = /^[A-Z]{3}$/.test(rawCurrency) ? rawCurrency : "OMR";
+    const value = typeof ec.value === "number" ? ec.value : 0;
+    g("event", event, { currency, value, items });
+  } catch {
+    /* analytics must never break the storefront */
+  }
 }
 
 // Forward GA4-style ecommerce events to the Meta, TikTok and Snapchat pixels. These are loaded
