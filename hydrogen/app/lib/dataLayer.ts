@@ -42,12 +42,18 @@ function fireGA4(event: string, data: Record<string, any>) {
 // Forward GA4-style ecommerce events to the Meta, TikTok and Snapchat pixels. These are loaded
 // directly in Hydrogen (root.tsx) because Shopify's Web Pixels (Customer Events) don't run on a
 // headless storefront. Fully guarded — a missing pixel or bad payload never throws.
-function firePixels(event: string, data: Record<string, any>) {
+function firePixels(event: string, data: Record<string, any>, attempt = 0) {
   try {
     if (typeof window === "undefined") return;
     const w = window as any;
     const fbq = w.fbq, ttq = w.ttq, snaptr = w.snaptr;
-    if (!fbq && !ttq && !snaptr) return;
+    if (!fbq && !ttq && !snaptr) {
+      // The ad pixels load AFTER hydration (see <MarketingPixels/> in root.tsx), so an early
+      // event — notably view_item, which fires on product mount before the pixels exist — would
+      // be dropped. Retry briefly (up to ~6s) until a pixel is ready, then fire once.
+      if (attempt < 15) setTimeout(() => firePixels(event, data, attempt + 1), 400);
+      return;
+    }
 
     const ec = (data && data.ecommerce) || {};
     const items: any[] = Array.isArray(ec.items) ? ec.items : [];
