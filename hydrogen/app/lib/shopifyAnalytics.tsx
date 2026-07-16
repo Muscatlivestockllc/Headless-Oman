@@ -120,10 +120,15 @@ export function ShopifyCollectionView({
 function pageTypeFor(pathname: string): string {
   const p = (pathname.replace(/^\/ar(?=\/|$)/, "") || "/");
   if (p === "/") return AnalyticsPageType.home;
-  if (p.startsWith("/products/")) return AnalyticsPageType.product;
+  // IMPORTANT: product / collection / search pages have dedicated view components
+  // (ShopifyProductView / ShopifyCollectionView / ShopifySearchView) that already emit
+  // product_page_rendered / collection_page_rendered / search_submitted. If PAGE_VIEW were sent
+  // with those pageTypes, Shopify emits the SAME funnel event again → double-counting. So we send
+  // a neutral "page" type for them; the trekkie page_view (what Sessions count) still fires.
+  if (p.startsWith("/products/") || p.startsWith("/collections/") || p.startsWith("/search")) {
+    return AnalyticsPageType.page;
+  }
   if (p === "/collections") return AnalyticsPageType.listCollections;
-  if (p.startsWith("/collections/")) return AnalyticsPageType.collection;
-  if (p.startsWith("/search")) return AnalyticsPageType.search;
   if (/^\/blogs\/[^/]+\/[^/]+/.test(p)) return AnalyticsPageType.article;
   if (p.startsWith("/blogs")) return AnalyticsPageType.blog;
   if (p === "/cart") return AnalyticsPageType.cart;
