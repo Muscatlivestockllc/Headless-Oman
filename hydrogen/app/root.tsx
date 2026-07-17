@@ -663,7 +663,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <link rel="alternate" hrefLang="ar" href={arHref} />
         <link rel="alternate" hrefLang="x-default" href={enHref} />
         <Meta />
-        <Links />
         {/* ── EARLY SESSION BEACON ──────────────────────────────────────────────────
             Shopify counts a Session from trekkie_storefront_page_view. Hydrogen's SDK only
             sends it AFTER React hydrates — measured ~4.3s on this store — so every visitor
@@ -676,6 +675,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <ShopifyPageView/> then SKIPS this page (window.__mlsEarlyPV) to avoid a double, but
             still fires if this ever fails (fetch .catch clears the flag) → a session can't be lost,
             and it keeps handling SPA navigations.
+            PLACEMENT IS LOAD-BEARING: it must stay AFTER <Meta/> (needs document.title) and
+            BEFORE <Links/>. Browsers block inline-script execution until preceding stylesheets
+            load — with this after <Links/> the beacon fired at 3.4s instead of ~0.2s, which
+            defeats the whole point. Do not move it below <Links/>.
             Speed: ~2KB inline, runs <1ms, fetch is async + keepalive → no render blocking. */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{
 var Y='_shopify_y',S='_shopify_s';
@@ -706,6 +709,7 @@ var body={events:[
 window.__mlsEarlyPV=location.pathname+location.search;
 fetch('https://monorail-edge.shopifysvc.com/unstable/produce_batch',{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(body),keepalive:true}).catch(function(){window.__mlsEarlyPV=null});
 }catch(e){}})();` }} />
+        <Links />
         {/* Google Tag Manager */}
         {/* GTM — dataLayer queue is created immediately (events are never lost), but the heavy
             gtm.js loads on first interaction OR a 4s fallback (guaranteed), keeping it off the
