@@ -155,6 +155,16 @@ export function ShopifyPageView() {
   const key = location.pathname + location.search;
   useEffect(() => {
     if (!shop?.shopId || sent.current === key) return;
+    // The early <head> beacon (root.tsx) already sent this page's view ~4s before hydration.
+    // Skip it here so it isn't counted twice. The flag is consumed (nulled) so returning to the
+    // same path later still fires, and if the early beacon FAILED its .catch clears the flag —
+    // then we fire below as the fallback, so a session can never be lost.
+    const w = window as unknown as { __mlsEarlyPV?: string | null };
+    if (w.__mlsEarlyPV && w.__mlsEarlyPV === key) {
+      w.__mlsEarlyPV = null;
+      sent.current = key;
+      return;
+    }
     sent.current = key;
     send(AnalyticsEventName.PAGE_VIEW, shop, {
       pageType: pageTypeFor(location.pathname),

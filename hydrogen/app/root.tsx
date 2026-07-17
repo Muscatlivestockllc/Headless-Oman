@@ -664,6 +664,48 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <link rel="alternate" hrefLang="x-default" href={enHref} />
         <Meta />
         <Links />
+        {/* ── EARLY SESSION BEACON ──────────────────────────────────────────────────
+            Shopify counts a Session from trekkie_storefront_page_view. Hydrogen's SDK only
+            sends it AFTER React hydrates — measured ~4.3s on this store — so every visitor
+            who leaves before that was NEVER counted. The old Liquid theme pinged instantly
+            from HTML, which is why it recorded 2,983 sessions/day (10.22% conv) vs Hydrogen's
+            225 (28.88% conv) — a ~3x undercount, confirmed by that same-store comparison.
+
+            This fires the SAME two events the SDK sends (payload copied verbatim from a live
+            SDK request), from the <head>, in ~200ms — so bounces are counted like on the theme.
+            <ShopifyPageView/> then SKIPS this page (window.__mlsEarlyPV) to avoid a double, but
+            still fires if this ever fails (fetch .catch clears the flag) → a session can't be lost,
+            and it keeps handling SPA navigations.
+            Speed: ~2KB inline, runs <1ms, fetch is async + keepalive → no render blocking. */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{
+var Y='_shopify_y',S='_shopify_s';
+function ht(){var d=new Date().getTime()>>>0,p=0;try{p=performance.now()>>>0}catch(e){}return Math.abs(d+p).toString(16).toLowerCase().padStart(8,'0')}
+function uuid(){var t='xxxx-4xxx-xxxx-xxxxxxxxxxxx',h='';try{var a=new Uint16Array(31);window.crypto.getRandomValues(a);var i=0;h=t.replace(/[x]/g,function(c){var r=a[i]%16,v=c==='x'?r:(r&3|8);i++;return v.toString(16)}).toUpperCase()}catch(e){h=t.replace(/[x]/g,function(c){var r=Math.random()*16|0;return (c==='x'?r:(r&3|8)).toString(16)}).toUpperCase()}return ht()+'-'+h}
+function gc(n){var c=document.cookie.split('; ');for(var i=0;i<c.length;i++){if(c[i].indexOf(n+'=')===0)return decodeURIComponent(c[i].slice(n.length+1))}return ''}
+var host=location.hostname,dom=(host==='mls.om'||host.slice(-7)==='.mls.om')?'; domain=.mls.om':'';
+function sc(n,v,a){document.cookie=n+'='+v+'; path=/; max-age='+a+dom+'; samesite=lax'+(location.protocol==='https:'?'; secure':'')}
+var y=gc(Y)||uuid(),s=gc(S)||uuid();
+sc(Y,y,31536000);sc(S,s,1800);
+function pt(p){if(p==='/ar'||p.indexOf('/ar/')===0){p=p.slice(3)||'/'}
+if(p==='/')return 'index';
+if(p.indexOf('/products/')===0)return 'product';
+if(p==='/collections')return 'list-collections';
+if(p.indexOf('/collections/')===0)return 'collection';
+if(p.indexOf('/search')===0)return 'search';
+var g=p.split('/');var seg=[];for(var i=0;i<g.length;i++){if(g[i])seg.push(g[i])}
+if(seg[0]==='blogs')return seg.length>=3?'article':'blog';
+if(p==='/cart')return 'cart';
+if(p.indexOf('/policies/')===0)return 'policy';
+if(p.indexOf('/account')===0)return 'customers/account';
+return 'page'}
+var now=Date.now(),u=location.href,ref=document.referrer||'';
+var body={events:[
+{schema_id:'trekkie_storefront_page_view/1.4',payload:{appClientId:'6167201',isMerchantRequest:false,hydrogenSubchannelId:'1000153258',isPersistentCookie:true,uniqToken:y,visitToken:s,microSessionId:uuid(),microSessionCount:1,url:u,path:location.pathname,search:location.search,referrer:ref,title:document.title||'',shopId:28537323629,currency:'OMR',contentLanguage:'${locale === "ar" ? "AR" : "EN"}',pageType:pt(location.pathname)},metadata:{event_created_at_ms:now}},
+{schema_id:'custom_storefront_customer_tracking/1.2',payload:{source:'hydrogen',asset_version_id:'2026.4.2',hydrogenSubchannelId:'1000153258',is_persistent_cookie:true,deprecated_visit_token:s,unique_token:y,event_time:now,event_id:uuid(),event_source_url:u,referrer:ref,user_agent:navigator.userAgent,navigation_type:'navigate',navigation_api:'PerformanceNavigationTiming',shop_id:28537323629,currency:'OMR',ccpa_enforced:false,gdpr_enforced:false,gdpr_enforced_as_string:'false',analytics_allowed:true,marketing_allowed:true,sale_of_data_allowed:true,event_name:'page_rendered',canonical_url:u},metadata:{event_created_at_ms:now}}
+]};
+window.__mlsEarlyPV=location.pathname+location.search;
+fetch('https://monorail-edge.shopifysvc.com/unstable/produce_batch',{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(body),keepalive:true}).catch(function(){window.__mlsEarlyPV=null});
+}catch(e){}})();` }} />
         {/* Google Tag Manager */}
         {/* GTM — dataLayer queue is created immediately (events are never lost), but the heavy
             gtm.js loads on first interaction OR a 4s fallback (guaranteed), keeping it off the
