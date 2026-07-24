@@ -6,8 +6,21 @@ import type { LoaderFunctionArgs } from "@shopify/remix-oxygen";
 // blog URLs use the same handles under the /ar prefix (Hydrogen serves them via @inContext).
 const SITE_URL = "https://mls.om";
 
+// Handles are ALWAYS requested in EN, for both the en and ar sitemaps.
+//
+// Without an explicit language these queries inherit whatever locale happened to populate the
+// CDN cache (s-maxage=3600 below), which intermittently returned Shopify's Arabic *translated*
+// handles and emitted bare /products/<arabic-handle> URLs — all of which 404, since Arabic
+// handles only resolve under the /ar prefix. Pinning the language makes the output deterministic.
+//
+// EN (not AR) is correct for the /ar sitemap too: /ar/products/<en-handle> resolves 200 via
+// @inContext, whereas /ar/products/<arabic-handle> only 302-redirects, and a sitemap should
+// list canonical 200 URLs.
+const SITEMAP_LANGUAGE = "EN";
+
 const PRODUCTS_QUERY = `#graphql
-  query SitemapProducts($first: Int!, $after: String) {
+  query SitemapProducts($first: Int!, $after: String, $language: LanguageCode)
+  @inContext(language: $language) {
     products(first: $first, after: $after, sortKey: UPDATED_AT) {
       pageInfo { hasNextPage endCursor }
       nodes { handle updatedAt }
@@ -16,7 +29,8 @@ const PRODUCTS_QUERY = `#graphql
 ` as const;
 
 const COLLECTIONS_QUERY = `#graphql
-  query SitemapCollections($first: Int!, $after: String) {
+  query SitemapCollections($first: Int!, $after: String, $language: LanguageCode)
+  @inContext(language: $language) {
     collections(first: $first, after: $after, sortKey: UPDATED_AT) {
       pageInfo { hasNextPage endCursor }
       nodes { handle updatedAt }
@@ -25,7 +39,8 @@ const COLLECTIONS_QUERY = `#graphql
 ` as const;
 
 const PAGES_QUERY = `#graphql
-  query SitemapPages($first: Int!, $after: String) {
+  query SitemapPages($first: Int!, $after: String, $language: LanguageCode)
+  @inContext(language: $language) {
     pages(first: $first, after: $after) {
       pageInfo { hasNextPage endCursor }
       nodes { handle updatedAt }
@@ -34,7 +49,8 @@ const PAGES_QUERY = `#graphql
 ` as const;
 
 const BLOGS_QUERY = `#graphql
-  query SitemapBlogs($first: Int!) {
+  query SitemapBlogs($first: Int!, $language: LanguageCode)
+  @inContext(language: $language) {
     blogs(first: $first) {
       nodes { handle articles(first: 250) { nodes { handle publishedAt } } }
     }
@@ -80,26 +96,26 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
 
   if (type === "products") {
     const products = await paginate<{ handle: string; updatedAt: string }>((after) =>
-      storefront.query(PRODUCTS_QUERY, { variables: { first: 250, after } }).then((d: any) => d.products),
+      storefront.query(PRODUCTS_QUERY, { variables: { first: 250, after, language: SITEMAP_LANGUAGE } }).then((d: any) => d.products),
     );
     for (const p of products) entries.push(urlEntry(`${prefix}/products/${p.handle}`, p.updatedAt, "weekly", "0.8"));
   } else if (type === "collections") {
     const collections = await paginate<{ handle: string; updatedAt: string }>((after) =>
-      storefront.query(COLLECTIONS_QUERY, { variables: { first: 250, after } }).then((d: any) => d.collections),
+      storefront.query(COLLECTIONS_QUERY, { variables: { first: 250, after, language: SITEMAP_LANGUAGE } }).then((d: any) => d.collections),
     );
     // Homepage lives here so it's covered for both locales (this child runs for en + ar).
     entries.push(urlEntry(`${prefix}/`, undefined, "daily", "1.0"));
     for (const c of collections) entries.push(urlEntry(`${prefix}/collections/${c.handle}`, c.updatedAt, "weekly", "0.7"));
   } else if (type === "pages") {
     const pages = await paginate<{ handle: string; updatedAt: string }>((after) =>
-      storefront.query(PAGES_QUERY, { variables: { first: 250, after } }).then((d: any) => d.pages),
+      storefront.query(PAGES_QUERY, { variables: { first: 250, after, language: SITEMAP_LANGUAGE } }).then((d: any) => d.pages),
     );
     for (const p of pages) {
       if (EXCLUDED_PAGES.has(p.handle)) continue;
       entries.push(urlEntry(`${prefix}/pages/${p.handle}`, p.updatedAt, "monthly", "0.5"));
     }
   } else if (type === "blogs") {
-    const blogs = await storefront.query(BLOGS_QUERY, { variables: { first: 50 } }).then((d: any) => d.blogs?.nodes ?? []);
+    const blogs = await storefront.query(BLOGS_QUERY, { variables: { first: 50, language: SITEMAP_LANGUAGE } }).then((d: any) => d.blogs?.nodes ?? []);
     entries.push(urlEntry(`${prefix}/blogs/all`, undefined, "daily", "0.8"));
     for (const b of blogs) {
       entries.push(urlEntry(`${prefix}/blogs/${b.handle}`, undefined, "weekly", "0.6"));
