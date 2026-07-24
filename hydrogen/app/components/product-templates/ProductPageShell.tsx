@@ -100,8 +100,24 @@ function LinkifyLine({ text }: { text: string }) {
   return (
     <>
       {parts.map((part, i) => {
-        if (/^\+[\d\s]{7,}$/.test(part))
-          return <a key={i} href={`tel:${part.replace(/\s/g, "")}`} className="font-medium text-crimson hover:underline">{part}</a>;
+        if (/^\+[\d\s]{7,}$/.test(part)) {
+          // A number introduced by "WhatsApp:" should open the chat, not the phone dialer.
+          // Scoped to that label so "Call: ..." and every other number keep tel:.
+          const isWhatsApp = /whatsapp\s*:?\s*$/i.test(parts[i - 1] ?? "");
+          const href = isWhatsApp
+            ? `https://wa.me/${part.replace(/\D/g, "")}`
+            : `tel:${part.replace(/\s/g, "")}`;
+          return (
+            <a
+              key={i}
+              href={href}
+              {...(isWhatsApp ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+              className="font-medium text-crimson hover:underline"
+            >
+              {part}
+            </a>
+          );
+        }
         if (/^[\w.+-]+@[\w-]+\.[a-z]{2,}$/i.test(part))
           return <a key={i} href={`mailto:${part}`} className="font-medium text-crimson hover:underline">{part}</a>;
         return <span key={i}>{part}</span>;
