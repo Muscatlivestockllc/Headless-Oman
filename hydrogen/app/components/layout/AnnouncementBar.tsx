@@ -49,7 +49,11 @@ export function AnnouncementBar({ messages = [], scrollSeconds }: AnnouncementBa
       <div className="flex py-2 text-xs sm:text-sm">
         <div className="announcement-scroll flex gap-12 whitespace-nowrap font-medium tracking-wide" style={style}>
           {items.map((m, i) => (
-            <span key={i} className="flex-shrink-0">★ {renderMessage(m, `a${i}`)}</span>
+            // Only the first pass is announced. The two duplicated passes exist purely to keep the
+            // marquee seamless, so hide them from screen readers (otherwise every message is read 3x).
+            <span key={i} className="flex-shrink-0" aria-hidden={i >= messages.length || undefined}>
+              ★ {renderMessage(m, `a${i}`)}
+            </span>
           ))}
         </div>
       </div>
