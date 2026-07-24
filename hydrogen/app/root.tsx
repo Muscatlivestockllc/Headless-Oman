@@ -655,7 +655,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             og:title/description/image come from each route's meta via <Meta/> below.
             (No hardcoded <title> here — it would duplicate the route title.) */}
         <meta property="og:site_name" content="MLS Oman" />
-        <meta property="og:locale" content={locale === "ar" ? "ar_AR" : "en_US"} />
+        <meta property="og:locale" content={locale === "ar" ? "ar_OM" : "en_OM"} />
         <meta name="twitter:card" content="summary_large_image" />
         {/* hreflang alternates (site-wide) */}
         <link rel="alternate" hrefLang="en" href={enHref} />
