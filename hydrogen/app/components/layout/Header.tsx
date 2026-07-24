@@ -34,6 +34,14 @@ import { useT } from "@/i18n/strings";
 import logo from "@/assets/mls-logo.png";
 import type { NavEntry, MobileBanner } from "~/root";
 
+// Region passed to Shopify's customer-account redirect. This is the Oman storefront, but both
+// account links were hardcoded to "AE" (carried over from the UAE storefront). Kept as one
+// constant so the desktop and mobile links can't drift apart again.
+const ACCOUNT_REGION_COUNTRY = "OM";
+
+const accountRedirectHref = (locale: string) =>
+  `/customer_authentication/redirect?locale=${locale}&region_country=${ACCOUNT_REGION_COUNTRY}`;
+
 function pickIcon(title: string, url: string): LucideIcon {
   const s = `${title} ${url}`.toLowerCase();
   if (/beef|steak|wagyu|angus/.test(s)) return Beef;
@@ -150,7 +158,7 @@ export function Header({ mainMenu = [], secondaryMenu = [], mobileCategoriesMenu
             </button>
           </div>
           <a
-            href={`/customer_authentication/redirect?locale=${locale}&region_country=AE`}
+            href={accountRedirectHref(locale)}
             aria-label={t("nav.account")}
           >
             <Button variant="ghost" size="icon">
@@ -763,7 +771,7 @@ function MobileMenuDrawer({
         </div>
       </div>
       <div className="shrink-0 px-3 pb-3">
-        <a href={`/customer_authentication/redirect?locale=${locale}&region_country=AE`}
+        <a href={accountRedirectHref(locale)}
           className="flex w-full items-center justify-center rounded-lg bg-crimson py-2.5 text-[11px] font-black uppercase tracking-widest transition-colors hover:bg-rich-red"
           style={{ color: '#ffffff' }}
         >{t("nav.login_signup")}</a>
