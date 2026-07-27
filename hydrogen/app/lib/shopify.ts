@@ -307,6 +307,29 @@ export function getOriginFromProduct(tags: string[] = [], title = ""): string | 
   return null;
 }
 
+/**
+ * Origin shown on the storefront badge.
+ *
+ * Tags are the primary signal, but several products carry descriptive/search tags that the tag
+ * heuristic misreads as origin — e.g. Australian, Somali, Pakistani and NZ mishkak/carcass products
+ * tagged "indian mutton" / "pakistani mutton" / "nz lamp" (added so shoppers searching those terms
+ * find the premium alternative) were showing an India (or wrong) flag on their own product page.
+ *
+ * Rule: when the tags yield an origin AND the title clearly states a DIFFERENT one, the title wins —
+ * titles like "AUS ...", "Local Somali ...", "PAK ...", "NZ ..." are authoritative. Products whose
+ * tags yield no origin stay unbadged exactly as before; this only RESOLVES CONFLICTS, it never adds
+ * a badge where there wasn't one (so accessories like "Usa Grill Cleaner" don't sprout flags).
+ */
+export function getOriginForBadge(tags: string[] = [], title = ""): string | null {
+  const fromTags = getOriginFromTags(tags);
+  if (!fromTags) return null;
+  for (const word of title.split(/[\s-]+/)) {
+    const fromTitle = matchOrigin(word);
+    if (fromTitle) return fromTitle !== fromTags ? fromTitle : fromTags;
+  }
+  return fromTags;
+}
+
 // OMR (and KWD/BHD) are 3-decimal currencies; most others are 2.
 const THREE_DECIMAL_CURRENCIES = new Set(["OMR", "KWD", "BHD"]);
 export function formatPrice(amount: string | number, currency = "OMR"): string {

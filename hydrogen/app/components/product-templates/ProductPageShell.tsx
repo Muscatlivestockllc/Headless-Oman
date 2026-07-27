@@ -12,7 +12,7 @@ import { OriginBadge } from "~/components/product/OriginBadge";
 import { StockBadge } from "~/components/product/StockBadge";
 import {
   formatPrice,
-  getOriginFromTags,
+  getOriginForBadge,
   parseRatingMetafields,
   shopifyImageUrl,
   type ShopifyProduct,
@@ -916,7 +916,7 @@ export function ProductPageShell({
   const variants = product.variants.nodes;
   const images = product.images.nodes;
   const mediaNodes = product.media?.nodes ?? [];
-  const origin = getOriginFromTags(product.tags);
+  const origin = getOriginForBadge(product.tags, product.title);
   const isFrozen = product.tags?.some((t: string) => t.toLowerCase() === "frozen") ?? false;
   const addToRecentlyViewed = useRecentlyViewed((s) => s.add);
 
