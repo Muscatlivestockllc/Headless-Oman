@@ -12,6 +12,7 @@ import {
   getStorefrontHeaders,
 } from "@shopify/remix-oxygen";
 import { AppSession } from "~/lib/session";
+import { resolveRedirect } from "~/lib/redirects";
 
 export default {
   async fetch(
@@ -26,8 +27,19 @@ export default {
         AppSession.init(request, [env.SESSION_SECRET]),
       ]);
 
+      // Duplicate-URL 301s. These run BEFORE routing because the old URLs still resolve to live
+      // 200 resources, so storefrontRedirect() (which only fires on a 404) never sees them.
+      const reqUrl = new URL(request.url);
+      const redirectTo = resolveRedirect(reqUrl.pathname);
+      if (redirectTo) {
+        return new Response(null, {
+          status: 301,
+          headers: { Location: redirectTo + reqUrl.search },
+        });
+      }
+
       // Detect locale from URL prefix /ar OR cookie.
-      const reqPath = new URL(request.url).pathname;
+      const reqPath = reqUrl.pathname;
       const hasArPrefix = reqPath === "/ar" || reqPath.startsWith("/ar/");
       const langCookie = request.headers.get("Cookie")?.match(/(?:^|;\s*)lang=([a-z]{2})/)?.[1];
       const language = (hasArPrefix || langCookie === "ar") ? "AR" : "EN";
