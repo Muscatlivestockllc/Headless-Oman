@@ -14,9 +14,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import os from "node:os";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -34,24 +32,21 @@ async function loadDotEnv() {
 await loadDotEnv();
 
 const SHOP = process.env.PUBLIC_STORE_DOMAIN ?? "";
+const TOKEN = process.env.SHOPIFY_ADMIN_API_TOKEN ?? "";
+const API_VERSION = process.env.PUBLIC_STOREFRONT_API_VERSION ?? "2025-07";
 if (!SHOP) { console.error("❌  Set PUBLIC_STORE_DOMAIN in .env"); process.exit(1); }
+if (!TOKEN) { console.error("❌  Set SHOPIFY_ADMIN_API_TOKEN in .env (needs write_metaobject_definitions)"); process.exit(1); }
 
+// Talks to the Admin GraphQL API directly with the private token (no Shopify CLI auth required).
 async function cli<T = any>(query: string, variables?: Record<string, unknown>): Promise<T> {
-  const tmp = os.tmpdir();
-  const qf = path.join(tmp, `mls-q-${Date.now()}.graphql`);
-  const vf = path.join(tmp, `mls-v-${Date.now()}.json`);
-  const isMut = /^\s*mutation/i.test(query);
-  try {
-    await fs.writeFile(qf, Buffer.from(query, "utf8"));
-    if (variables) await fs.writeFile(vf, Buffer.from(JSON.stringify(variables), "utf8"));
-    const args = ["shopify", "store", "execute", "--store", SHOP, "--query-file", qf, "--json",
-      ...(variables ? ["--variable-file", vf] : []), ...(isMut ? ["--allow-mutations"] : [])];
-    const raw = execSync(`npx ${args.join(" ")}`, { encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"] });
-    return JSON.parse(raw) as T;
-  } finally {
-    await fs.unlink(qf).catch(() => {});
-    if (variables) await fs.unlink(vf).catch(() => {});
-  }
+  const res = await fetch(`https://${SHOP}/admin/api/${API_VERSION}/graphql.json`, {
+    method: "POST",
+    headers: { "X-Shopify-Access-Token": TOKEN, "Content-Type": "application/json" },
+    body: JSON.stringify({ query, variables }),
+  });
+  const json: any = await res.json();
+  if (json.errors) throw new Error(JSON.stringify(json.errors));
+  return json.data as T;
 }
 
 const TYPE = "mls_free_gift_rule";
