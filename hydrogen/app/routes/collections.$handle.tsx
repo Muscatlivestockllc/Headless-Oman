@@ -273,7 +273,7 @@ function CollectionDescription({ html }: { html: string }) {
     <div className="mx-auto mt-3 max-w-2xl text-center">
       <div
         ref={ref}
-        className={`prose prose-sm prose-neutral dark:prose-invert max-w-none text-muted-foreground transition-all [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_li]:mb-1 ${!expanded ? "max-h-20 overflow-hidden" : ""}`}
+        className={`prose prose-sm prose-neutral dark:prose-invert max-w-none text-muted-foreground transition-all [&_h1]:font-bold [&_h2]:font-bold [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_li]:mb-1 [&_i.bi]:hidden [&_p:has(svg)]:flex [&_p:has(svg)]:items-start [&_p:has(svg)]:justify-center [&_p:has(svg)]:gap-2 [&_p:has(svg)]:text-left [&_svg]:mt-0.5 [&_svg]:shrink-0 ${!expanded ? "max-h-20 overflow-hidden" : ""}`}
         dangerouslySetInnerHTML={{ __html: html }}
       />
       {isLong && (
