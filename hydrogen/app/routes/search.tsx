@@ -6,9 +6,10 @@ import { ProductCard } from "~/components/product/ProductCard";
 import type { ShopifyProduct } from "~/lib/shopify";
 import { useT } from "~/i18n/strings";
 import { detectLanguage } from "~/lib/locale";
+import { fastSimonSearch } from "~/lib/fastsimon";
 
-// Uses Shopify's dedicated search API — same relevance engine as predictiveSearch
-const SEARCH_QUERY = `#graphql
+// Shared card fields, used by both native search and the Fast Simon hydration query.
+const SEARCH_PRODUCT_FRAGMENT = `#graphql
   fragment SearchProduct on Product {
     id
     title
@@ -42,6 +43,11 @@ const SEARCH_QUERY = `#graphql
       {namespace: "reviews", key: "rating_count"}
     ]) { key value }
   }
+`;
+
+// Native Shopify search — used as the fallback when Fast Simon is unavailable.
+const SEARCH_QUERY = `#graphql
+  ${SEARCH_PRODUCT_FRAGMENT}
   query Search(
     $query: String!
     $first: Int!
@@ -57,18 +63,54 @@ const SEARCH_QUERY = `#graphql
   }
 ` as const;
 
+// Hydrate Fast Simon's ranked product IDs into full card data. nodes() preserves input order,
+// so Fast Simon's relevance ranking is kept.
+const SEARCH_NODES_QUERY = `#graphql
+  ${SEARCH_PRODUCT_FRAGMENT}
+  query SearchNodes(
+    $ids: [ID!]!
+    $language: LanguageCode
+    $country: CountryCode
+  ) @inContext(language: $language, country: $country) {
+    nodes(ids: $ids) {
+      ... on Product { ...SearchProduct }
+    }
+  }
+` as const;
+
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const q = url.searchParams.get("q")?.trim() ?? "";
   if (!q) return { q, products: [] as ShopifyProduct[], total: 0 };
 
   const language = detectLanguage(request);
-  const data = await context.storefront.query(SEARCH_QUERY, {
-    variables: { query: q, first: 24, language, country: "OM" as const },
-  });
+  const inCtx = { language, country: "OM" as const };
+  const sellable = (node: any) =>
+    node && parseFloat(node.priceRange?.minVariantPrice?.amount ?? "0") > 0;
 
+  // 1) Fast Simon relevance ranking → hydrate its product IDs through our Storefront API,
+  //    keeping Fast Simon's order (nodes() returns results in the same order as the ids).
+  const fs = await fastSimonSearch(q, { limit: 24 });
+  if (fs) {
+    const data = await context.storefront.query(SEARCH_NODES_QUERY, {
+      variables: { ids: fs.productIds, ...inCtx },
+    });
+    const byId = new Map(
+      (data?.nodes ?? []).filter(Boolean).map((n: any) => [n.id, n]),
+    );
+    const products: ShopifyProduct[] = fs.productIds
+      .map((id) => byId.get(id))
+      .filter(sellable)
+      .map((node: any) => ({ node }));
+    if (products.length) return { q, products, total: fs.total };
+  }
+
+  // 2) Fallback: native Shopify search (Fast Simon down, timed out, or no matches).
+  const data = await context.storefront.query(SEARCH_QUERY, {
+    variables: { query: q, first: 24, ...inCtx },
+  });
   const products: ShopifyProduct[] = (data?.search?.nodes ?? [])
-    .filter((node: any) => parseFloat(node.priceRange?.minVariantPrice?.amount ?? "0") > 0)
+    .filter(sellable)
     .map((node: any) => ({ node }));
   return { q, products, total: products.length };
 }
