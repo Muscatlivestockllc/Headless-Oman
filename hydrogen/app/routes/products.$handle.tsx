@@ -21,8 +21,9 @@ const PicanhaCutTemplate = lazy(() => import("~/components/product-templates/Pic
 const WholeCarcassTemplate = lazy(() => import("~/components/product-templates/WholeCarcassTemplate").then((m) => ({ default: m.WholeCarcassTemplate })));
 const KebabTemplate = lazy(() => import("~/components/product-templates/KebabTemplate").then((m) => ({ default: m.KebabTemplate })));
 
-const PAGE_SETTINGS_QUERY = `
-  query {
+const PAGE_SETTINGS_QUERY = `#graphql
+  query ProductPageSettings($language: LanguageCode, $country: CountryCode)
+  @inContext(language: $language, country: $country) {
     metaobjects(type: "product_page_settings", first: 1) {
       nodes {
         fields {
@@ -66,8 +67,9 @@ const ADMIN_PRODUCT_BY_GID_QUERY = (gid: string) => `
 // Each instance must have a "template_suffix" field to identify which template it configures.
 // Optional fields: "section_title", "highlight_text".
 // Create/edit instances in Shopify Admin › Content › Metaobjects.
-const TEMPLATE_SETTINGS_QUERY = `
-  query {
+const TEMPLATE_SETTINGS_QUERY = `#graphql
+  query ProductTemplateSettings($language: LanguageCode, $country: CountryCode)
+  @inContext(language: $language, country: $country) {
     metaobjects(type: "product_template_settings", first: 20) {
       nodes { fields { key value } }
     }
@@ -307,7 +309,14 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
       variables: { handle, language, country: "OM" as const },
       cache: context.storefront.CacheShort(),
     }),
-    context.adminFetch(`{ nodes: metaobjects(type: "icon_with_text", first: 10) { nodes { id handle fields { key value reference { ... on MediaImage { image { url altText } } } } } } }`).catch(() => null),
+    // Storefront (not adminFetch) so Translate & Adapt serves the Arabic icon text.
+    context.storefront.query(
+      `#graphql
+       query PdpIcons($language: LanguageCode, $country: CountryCode) @inContext(language: $language, country: $country) {
+         nodes: metaobjects(type: "icon_with_text", first: 10) { nodes { id handle fields { key value reference { ... on MediaImage { image { url altText } } } } } }
+       }`,
+      { variables: { language, country: "OM" as const } }
+    ).catch(() => null),
   ]);
   if (!data.product) throw new Response("Not found", { status: 404 });
   // Zero-price products are internal free-gift items — redirect to home instead of 404
@@ -404,8 +413,9 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
       context.storefront.query(RECOMMENDATIONS_QUERY, {
         variables: { productId: data.product.id, language, country: "OM" as const },
       }).catch(() => null),
-      context.adminFetch(PAGE_SETTINGS_QUERY).catch(() => null),
-      context.adminFetch(TEMPLATE_SETTINGS_QUERY).catch(() => null),
+      // Storefront (not adminFetch) so Translate & Adapt serves the Arabic metaobject content.
+      context.storefront.query(PAGE_SETTINGS_QUERY, { variables: { language, country: "OM" as const } }).catch(() => null),
+      context.storefront.query(TEMPLATE_SETTINGS_QUERY, { variables: { language, country: "OM" as const } }).catch(() => null),
       globoPromise,
     ]).then(([recsData, settingsData, templateSettingsData, globoOptionSets]) => {
     const recommendations: ShopifyProduct[] = (recsData?.productRecommendations ?? [])
