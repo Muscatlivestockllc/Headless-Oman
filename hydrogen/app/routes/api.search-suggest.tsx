@@ -38,22 +38,16 @@ const PRODUCTS_BY_ID_QUERY = `#graphql
   }
 ` as const;
 
-// Native product fallback (when Fast Simon is unavailable).
-const PRODUCTS_FALLBACK_QUERY = `#graphql
-  ${PRODUCT_FIELDS}
-  query SuggestProductsFallback($query: String!, $language: LanguageCode, $country: CountryCode)
-  @inContext(language: $language, country: $country) {
-    predictiveSearch(query: $query, limit: 6, types: [PRODUCT]) {
-      products { ...SuggestProduct }
-    }
-  }
-` as const;
-
-// Pages / articles / collections — native predictiveSearch (Fast Simon doesn't index these).
+// Native predictiveSearch does true as-you-type PREFIX matching across title/description, so a
+// half-typed word like "whole car" matches "Whole Carcass" — which Fast Simon's full-text endpoint
+// does not (it drops the partial word). We take its products AND the pages / articles / collections
+// (Fast Simon only indexes products).
 const CONTENT_QUERY = `#graphql
+  ${PRODUCT_FIELDS}
   query SuggestContent($query: String!, $language: LanguageCode, $country: CountryCode)
   @inContext(language: $language, country: $country) {
-    predictiveSearch(query: $query, limit: 4, types: [PAGE, ARTICLE, COLLECTION]) {
+    predictiveSearch(query: $query, limit: 6, types: [PRODUCT, PAGE, ARTICLE, COLLECTION]) {
+      products { ...SuggestProduct }
       pages { title handle }
       articles { title handle blog { handle } image { url altText } }
       collections { title handle image { url altText } }
@@ -71,41 +65,47 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const inCtx = { language, country: "OM" as const };
   const sellable = (p: any) => parseFloat(p?.priceRange?.minVariantPrice?.amount ?? "0") > 0;
 
-  // ── Products: Fast Simon ranking → hydrate; fall back to native predictive search ──
-  let products: any[] = [];
+  // ── Products: hybrid — Fast Simon ranking (whole words) + native prefix matching ──
   let correctedTerm: string | null = null;
+  let fsProducts: any[] = [];
   const fs = await fastSimonSearch(q, { limit: 6 });
+  // Did Fast Simon just drop a half-typed last word? (its matched term is a prefix of the query)
+  const truncated = !!(fs?.correctedTerm && q.toLowerCase().startsWith(fs.correctedTerm.toLowerCase() + " "));
   if (fs) {
-    correctedTerm = fs.correctedTerm ?? null;
     const d: any = await context.storefront.query(PRODUCTS_BY_ID_QUERY, {
       variables: { ids: fs.productIds, ...inCtx },
     });
     const byId = new Map((d?.nodes ?? []).filter(Boolean).map((n: any) => [n.id, n]));
-    products = fs.productIds.map((id) => byId.get(id)).filter(Boolean);
+    fsProducts = fs.productIds.map((id) => byId.get(id)).filter(Boolean);
+    // Show "did you mean" only for a real typo fix — not a half-typed-word truncation.
+    correctedTerm = truncated ? null : (fs.correctedTerm ?? null);
   }
-  if (!products.length) {
-    const d: any = await context.storefront.query(PRODUCTS_FALLBACK_QUERY, {
-      variables: { query: q, ...inCtx },
-    });
-    products = d?.predictiveSearch?.products ?? [];
-  }
-  products = products
-    .filter((p) => sellable(p) && !isJunk(p?.title) && !isRedirected("products", p?.handle))
-    .slice(0, 6);
 
-  // ── Pages / articles / collections: native ──
-  let pages: any[] = [], articles: any[] = [], collections: any[] = [];
+  // Native predictiveSearch — prefix matching (products) + pages / articles / collections.
+  let nativeProducts: any[] = [], pages: any[] = [], articles: any[] = [], collections: any[] = [];
   try {
     const c: any = await context.storefront.query(CONTENT_QUERY, {
       variables: { query: q, ...inCtx },
     });
     const ps = c?.predictiveSearch ?? {};
+    nativeProducts = ps.products ?? [];
     pages = (ps.pages ?? []).filter((p: any) => !isJunk(p?.title) && !isRedirected("pages", p?.handle));
     articles = (ps.articles ?? []).filter((a: any) => !isJunk(a?.title));
     collections = (ps.collections ?? []).filter((c: any) => !isJunk(c?.title) && !isRedirected("collections", c?.handle));
   } catch {
     /* content is best-effort; products still return */
   }
+
+  // Merge: when Fast Simon truncated a half-typed word, native prefix matches are the real intent →
+  // lead with them; otherwise Fast Simon's ranking leads. Dedupe by id, drop junk, cap at 6.
+  const seen = new Set<string>();
+  const products = (truncated ? [...nativeProducts, ...fsProducts] : [...fsProducts, ...nativeProducts])
+    .filter((p: any) => {
+      if (!p || seen.has(p.id)) return false;
+      seen.add(p.id);
+      return sellable(p) && !isJunk(p?.title) && !isRedirected("products", p?.handle);
+    })
+    .slice(0, 6);
 
   return Response.json(
     { products, pages, articles, collections, correctedTerm },
