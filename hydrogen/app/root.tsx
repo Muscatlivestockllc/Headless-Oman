@@ -570,6 +570,13 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       freeGiftRules: parseFreeGiftRules(adminData?.freeGiftRules?.nodes ?? []),
     };
     const searchConfig = parseSearchConfig(adminData?.searchConfig?.nodes ?? []);
+    // Popular searches — derived dynamically from the merchant's main-menu categories (already
+    // localized via T Lab menu translations), so there's no manual list to maintain. Downstream it
+    // falls back to the metaobject override / code list if the menu yields nothing.
+    const popularSearches = Array.from(new Set([
+      ...mainMenu.flatMap((e) => (e.columns ?? []).flatMap((c) => (c.links ?? []).map((l) => l.label))),
+      ...mainMenu.map((e) => e.label),
+    ])).filter((l) => typeof l === "string" && l.trim().length >= 3 && l.trim().length <= 22).slice(0, 8);
 
     function menuToCol(menu: any): { heading: string; links: FooterLink[] } | null {
       if (!menu?.items?.length) return null;
@@ -623,7 +630,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     }
 
     const faviconUrl = footerSettings?.faviconUrl ?? null;
-    return { mainMenu, secondaryMenu, mobileMenu, mobileCategoriesMenu, footerSettings, footerMenuCols, announcementMessages, announcementScrollSeconds, cartDrawerConfig, searchConfig, navItemImages, mobileBanners, faviconUrl, locale: (language === "AR" ? "ar" : "en") as "ar" | "en", shop, consent };
+    return { mainMenu, secondaryMenu, mobileMenu, mobileCategoriesMenu, footerSettings, footerMenuCols, announcementMessages, announcementScrollSeconds, cartDrawerConfig, searchConfig, popularSearches, navItemImages, mobileBanners, faviconUrl, locale: (language === "AR" ? "ar" : "en") as "ar" | "en", shop, consent };
   } catch (e) {
     console.error("[root loader]", e);
     return {
@@ -635,6 +642,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       announcementScrollSeconds: null as number | null,
       cartDrawerConfig: { freeShippingThreshold: 350, deliveryItems: [], freeGiftSubVariantId: "", freeGiftCarVariantId: "", freeGiftRules: [] },
       searchConfig: {} as Record<string, string>,
+      popularSearches: [] as string[],
       navItemImages: {} as Record<string, string>,
       mobileBanners: [] as MobileBanner[],
       mobileMenu: [] as MobileMenuTab[],

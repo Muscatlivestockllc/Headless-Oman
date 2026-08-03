@@ -72,7 +72,24 @@ export function SearchAutosuggest({
     return () => clearTimeout(t);
   }, [q]);
 
-  useEffect(() => { setRecent(loadRecent()); }, []);
+  useEffect(() => {
+    const local = loadRecent();
+    setRecent(local);
+    // Merge in the logged-in customer's cross-device recent searches (server is source of truth).
+    fetch("/api/recent-searches")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: any) => {
+        if (d?.loggedIn && Array.isArray(d.searches)) {
+          const merged = [
+            ...d.searches,
+            ...local.filter((l) => !d.searches.some((s: string) => s.toLowerCase() === l.toLowerCase())),
+          ].slice(0, RECENT_MAX);
+          setRecent(merged);
+          try { localStorage.setItem(RECENT_KEY, JSON.stringify(merged)); } catch { /* ignore */ }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -101,11 +118,22 @@ export function SearchAutosuggest({
       try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* ignore */ }
       return next;
     });
+    // Sync to the customer's account so it follows them across browsers (no-op if logged out).
+    fetch("/api/recent-searches", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ term: val }),
+    }).catch(() => {});
   };
 
   const clearRecent = () => {
     setRecent([]);
     try { localStorage.removeItem(RECENT_KEY); } catch { /* ignore */ }
+    fetch("/api/recent-searches", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clear: true }),
+    }).catch(() => {});
   };
 
   const submit = (value: string) => {
