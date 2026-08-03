@@ -5,11 +5,20 @@ import { useT } from "~/i18n/strings";
 // already-localized by the AR-aware root loader). Each falls back to the in-code i18n string when the
 // metaobject field is empty or missing — so nothing ever renders blank.
 export function useSearchLabels() {
-  const root = useRouteLoaderData("root") as { searchConfig?: Record<string, string> } | undefined;
+  const root = useRouteLoaderData("root") as
+    | { searchConfig?: Record<string, string>; popularSearches?: string[] }
+    | undefined;
   const cfg = root?.searchConfig ?? {};
   const t = useT();
   const label = (metaKey: string, i18nKey: Parameters<typeof t>[0]) =>
     cfg[metaKey]?.trim() || t(i18nKey);
+
+  // Popular terms: dynamic from menu categories (already localized) → metaobject override → code.
+  const menuPopular = (root?.popularSearches ?? []).map((s) => s.trim()).filter(Boolean);
+  const popularTerms = menuPopular.length
+    ? menuPopular
+    : (cfg.popular_terms?.trim() || t("search.popular_terms")).split("|").map((s) => s.trim()).filter(Boolean);
+
   return {
     recent: label("label_recent", "search.recent"),
     popular: label("label_popular", "search.popular"),
@@ -18,9 +27,6 @@ export function useSearchLabels() {
     pages: label("label_pages", "search.pages"),
     articles: label("label_articles", "search.articles"),
     showingFor: label("label_showing_for", "search.showing_for"),
-    popularTerms: (cfg.popular_terms?.trim() || t("search.popular_terms"))
-      .split("|")
-      .map((s) => s.trim())
-      .filter(Boolean),
+    popularTerms,
   };
 }
