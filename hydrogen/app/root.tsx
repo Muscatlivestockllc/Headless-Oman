@@ -225,6 +225,9 @@ const ADMIN_FOOTER_QUERY = `
     freeGiftRules: metaobjects(type: "mls_free_gift_rule", first: 20) {
       nodes { id fields { key value } }
     }
+    searchConfig: metaobjects(type: "mls_search_config", first: 1) {
+      nodes { fields { key value } }
+    }
   }
 `;
 
@@ -318,6 +321,19 @@ function parseCartDrawerConfig(nodes: any[]) {
     freeGiftSubVariantId: f.free_gift_subscription_variant_id?.value ?? "",
     freeGiftCarVariantId: f.free_gift_carcass_variant_id?.value ?? "",
   };
+}
+
+// Parse mls_search_config — search UI text (popular terms + labels). Translatable, so the values
+// arrive already localized by T Lab under the AR-aware storefront. Empty fields fall back in the UI.
+export type SearchConfig = Record<string, string>;
+function parseSearchConfig(nodes: any[]): SearchConfig {
+  const node = nodes[0];
+  if (!node) return {};
+  const out: SearchConfig = {};
+  for (const x of node.fields ?? []) {
+    if (typeof x?.value === "string" && x.value.trim()) out[x.key] = x.value;
+  }
+  return out;
 }
 
 // Parse mls_free_gift_rule metaobjects into the cart's free-gift rule engine input.
@@ -553,6 +569,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       ...parseCartDrawerConfig(adminData?.cartDrawer?.nodes ?? []),
       freeGiftRules: parseFreeGiftRules(adminData?.freeGiftRules?.nodes ?? []),
     };
+    const searchConfig = parseSearchConfig(adminData?.searchConfig?.nodes ?? []);
 
     function menuToCol(menu: any): { heading: string; links: FooterLink[] } | null {
       if (!menu?.items?.length) return null;
@@ -606,7 +623,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     }
 
     const faviconUrl = footerSettings?.faviconUrl ?? null;
-    return { mainMenu, secondaryMenu, mobileMenu, mobileCategoriesMenu, footerSettings, footerMenuCols, announcementMessages, announcementScrollSeconds, cartDrawerConfig, navItemImages, mobileBanners, faviconUrl, locale: (language === "AR" ? "ar" : "en") as "ar" | "en", shop, consent };
+    return { mainMenu, secondaryMenu, mobileMenu, mobileCategoriesMenu, footerSettings, footerMenuCols, announcementMessages, announcementScrollSeconds, cartDrawerConfig, searchConfig, navItemImages, mobileBanners, faviconUrl, locale: (language === "AR" ? "ar" : "en") as "ar" | "en", shop, consent };
   } catch (e) {
     console.error("[root loader]", e);
     return {
@@ -617,6 +634,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       announcementMessages: [] as string[],
       announcementScrollSeconds: null as number | null,
       cartDrawerConfig: { freeShippingThreshold: 350, deliveryItems: [], freeGiftSubVariantId: "", freeGiftCarVariantId: "", freeGiftRules: [] },
+      searchConfig: {} as Record<string, string>,
       navItemImages: {} as Record<string, string>,
       mobileBanners: [] as MobileBanner[],
       mobileMenu: [] as MobileMenuTab[],

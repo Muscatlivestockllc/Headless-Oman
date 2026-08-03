@@ -5,6 +5,7 @@ import { useT } from "@/i18n/strings";
 import { Search, Loader2, Clock, TrendingUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { shopifyImageUrl, formatPrice } from "@/lib/shopify";
+import { useSearchLabels } from "@/lib/searchLabels";
 
 // Autosuggest is served by /api/search-suggest: products ranked by Fast Simon, plus pages,
 // blog articles and collections from the native Storefront predictiveSearch. The empty state
@@ -55,8 +56,10 @@ export function SearchAutosuggest({
   const lp = useLocalePath();
   const t = useT();
   const resolvedPlaceholder = placeholder ?? t("search.placeholder");
-  // Popular searches are localized (EN/AR) via i18n — edit "search.popular_terms" in strings.ts.
-  const popularTerms = t("search.popular_terms").split("|").map((s) => s.trim()).filter(Boolean);
+  // Labels + popular terms come from the mls_search_config metaobject (translated in T Lab),
+  // falling back to the in-code strings.
+  const L = useSearchLabels();
+  const popularTerms = L.popularTerms;
   const [q, setQ] = useState(defaultQuery);
   const [debounced, setDebounced] = useState("");
   const [open, setOpen] = useState(false);
@@ -184,8 +187,8 @@ export function SearchAutosuggest({
               {recent.length > 0 && (
                 <div className="mb-2">
                   <div className="flex items-center justify-between px-2 py-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t("search.recent")}</span>
-                    <button type="button" onClick={clearRecent} className="text-[10px] font-semibold text-crimson hover:underline">{t("search.clear")}</button>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{L.recent}</span>
+                    <button type="button" onClick={clearRecent} className="text-[10px] font-semibold text-crimson hover:underline">{L.clear}</button>
                   </div>
                   {recent.map((term) => (
                     <button
@@ -202,7 +205,7 @@ export function SearchAutosuggest({
               )}
               <div>
                 <div className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  <TrendingUp className="h-3 w-3" /> {t("search.popular")}
+                  <TrendingUp className="h-3 w-3" /> {L.popular}
                 </div>
                 <div className="flex flex-wrap gap-1.5 px-2 pb-1 pt-0.5">
                   {popularTerms.map((term) => (
@@ -288,9 +291,9 @@ export function SearchAutosuggest({
                         : "flex-1"
                     } bg-muted/30 p-2`}
                   >
-                    {renderGroup(t("search.collections"), collections, (c) => lp(`/collections/${c.handle}`))}
-                    {renderGroup(t("search.pages"), pages, (p) => lp(`/pages/${p.handle}`))}
-                    {renderGroup(t("search.articles"), articles, (a) => lp(`/blogs/${a.blog?.handle ?? "news"}/${a.handle}`))}
+                    {renderGroup(L.collections, collections, (c) => lp(`/collections/${c.handle}`))}
+                    {renderGroup(L.pages, pages, (p) => lp(`/pages/${p.handle}`))}
+                    {renderGroup(L.articles, articles, (a) => lp(`/blogs/${a.blog?.handle ?? "news"}/${a.handle}`))}
                   </div>
                 )}
               </div>
