@@ -2,12 +2,27 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useLocalePath } from "@/stores/localeStore";
 import { useT } from "@/i18n/strings";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Clock, TrendingUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { shopifyImageUrl, formatPrice } from "@/lib/shopify";
 
 // Autosuggest is served by /api/search-suggest: products ranked by Fast Simon, plus pages,
-// blog articles and collections from the native Storefront predictiveSearch.
+// blog articles and collections from the native Storefront predictiveSearch. The empty state
+// shows the shopper's recent searches (localStorage) and a curated set of popular searches.
+
+const RECENT_KEY = "mls_recent_searches";
+const RECENT_MAX = 6;
+const POPULAR_SEARCHES = ["Wagyu", "Angus Beef", "Burgers", "Lamb Carcass", "Mishkak", "Ribeye", "Chicken"];
+
+function loadRecent(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr.filter((s) => typeof s === "string").slice(0, RECENT_MAX) : [];
+  } catch {
+    return [];
+  }
+}
 
 interface PredictiveProduct {
   id: string;
@@ -24,6 +39,7 @@ interface SuggestData {
   pages: Array<{ title: string; handle: string }>;
   articles: Array<{ title: string; handle: string; blog?: { handle: string } | null }>;
   collections: Array<{ title: string; handle: string }>;
+  correctedTerm?: string | null;
 }
 
 interface Props {
@@ -43,13 +59,16 @@ export function SearchAutosuggest({
   const [q, setQ] = useState(defaultQuery);
   const [debounced, setDebounced] = useState("");
   const [open, setOpen] = useState(false);
+  const [recent, setRecent] = useState<string[]>([]);
   const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(q.trim()), 250);
+    const t = setTimeout(() => setDebounced(q.trim()), 200);
     return () => clearTimeout(t);
   }, [q]);
+
+  useEffect(() => { setRecent(loadRecent()); }, []);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -70,14 +89,38 @@ export function SearchAutosuggest({
     staleTime: 1000 * 30,
   });
 
-  const submit = (value: string) => {
-    if (!value.trim()) return;
-    setOpen(false);
-    onNavigate?.();
-    navigate(`/search?q=${encodeURIComponent(value.trim())}`);
+  const saveRecent = (term: string) => {
+    const val = term.trim();
+    if (val.length < 2) return;
+    setRecent((prev) => {
+      const next = [val, ...prev.filter((r) => r.toLowerCase() !== val.toLowerCase())].slice(0, RECENT_MAX);
+      try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
   };
 
-  const close = () => { setOpen(false); onNavigate?.(); };
+  const clearRecent = () => {
+    setRecent([]);
+    try { localStorage.removeItem(RECENT_KEY); } catch { /* ignore */ }
+  };
+
+  const submit = (value: string) => {
+    const val = value.trim();
+    if (!val) return;
+    saveRecent(val);
+    setOpen(false);
+    onNavigate?.();
+    navigate(`/search?q=${encodeURIComponent(val)}`);
+  };
+
+  // Recent / popular chip → fill the box and go to results.
+  const runTerm = (term: string) => { setQ(term); submit(term); };
+
+  const close = () => {
+    if (debounced.trim().length >= 2) saveRecent(debounced);
+    setOpen(false);
+    onNavigate?.();
+  };
 
   const products = (data?.products ?? []).filter(
     (p) => parseFloat(p.priceRange.minVariantPrice.amount) > 0
@@ -87,6 +130,10 @@ export function SearchAutosuggest({
   const collections = data?.collections ?? [];
   const hasAny = products.length + pages.length + articles.length + collections.length > 0;
   const hasSuggestions = collections.length + pages.length + articles.length > 0;
+  const correctedTerm =
+    data?.correctedTerm && data.correctedTerm.toLowerCase() !== debounced.toLowerCase()
+      ? data.correctedTerm
+      : null;
 
   // Compact grouped links for the right-hand suggestions rail (Collections / Pages / Articles).
   const renderGroup = (
@@ -118,7 +165,7 @@ export function SearchAutosuggest({
           <input
             value={q}
             onChange={(e) => { setQ(e.target.value); setOpen(true); }}
-            onFocus={() => { if (q.trim().length >= 2) setOpen(true); }}
+            onFocus={() => setOpen(true)}
             type="search"
             placeholder={resolvedPlaceholder}
             className="w-full rounded-full border border-border bg-card py-3 pl-11 pr-4 text-base font-semibold outline-none focus:border-crimson"
@@ -129,14 +176,59 @@ export function SearchAutosuggest({
         </div>
       </form>
 
-      {open && debounced.length >= 2 && (
+      {open && (
         <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[70vh] overflow-y-auto rounded-xl border border-border bg-popover shadow-xl">
-          {!hasAny && !isFetching ? (
+          {debounced.length < 2 ? (
+            <div className="p-2">
+              {recent.length > 0 && (
+                <div className="mb-2">
+                  <div className="flex items-center justify-between px-2 py-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t("search.recent")}</span>
+                    <button type="button" onClick={clearRecent} className="text-[10px] font-semibold text-crimson hover:underline">{t("search.clear")}</button>
+                  </div>
+                  {recent.map((term) => (
+                    <button
+                      key={term}
+                      type="button"
+                      onClick={() => runTerm(term)}
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
+                    >
+                      <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{term}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div>
+                <div className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <TrendingUp className="h-3 w-3" /> {t("search.popular")}
+                </div>
+                <div className="flex flex-wrap gap-1.5 px-2 pb-1 pt-0.5">
+                  {POPULAR_SEARCHES.map((term) => (
+                    <button
+                      key={term}
+                      type="button"
+                      onClick={() => runTerm(term)}
+                      className="rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors hover:border-crimson hover:text-crimson"
+                    >
+                      {term}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : !hasAny && !isFetching ? (
             <div className="px-4 py-6 text-center text-sm text-muted-foreground">
               {t("search.no_matches")} &ldquo;{debounced}&rdquo;
             </div>
           ) : (
             <>
+              {correctedTerm && (
+                <div className="border-b border-border px-4 py-2 text-xs text-muted-foreground">
+                  {t("search.showing_for")}{" "}
+                  <span className="font-semibold text-crimson">&ldquo;{correctedTerm}&rdquo;</span>
+                </div>
+              )}
               <div className="flex flex-col sm:flex-row">
                 {products.length > 0 && (
                   <ul className="flex-1 divide-y divide-border">

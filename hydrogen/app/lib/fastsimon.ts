@@ -16,6 +16,8 @@ export interface FastSimonSearch {
   productIds: string[];
   /** Total matches Fast Simon reports (for the "N products found" count). */
   total: number;
+  /** The term Fast Simon actually matched when it auto-corrected a typo — for "Showing results for …". */
+  correctedTerm?: string;
 }
 
 /**
@@ -44,7 +46,10 @@ export async function fastSimonSearch(
       .filter((id) => id != null && String(id).length > 0)
       .map((id) => `gid://shopify/Product/${id}`);
     if (!productIds.length) return null;
-    return { productIds, total: Number(json?.total_results) || productIds.length };
+    const resultsFor = typeof json?.results_for === "string" ? json.results_for.trim() : "";
+    const correctedTerm =
+      resultsFor && resultsFor.toLowerCase() !== q.toLowerCase() ? resultsFor : undefined;
+    return { productIds, total: Number(json?.total_results) || productIds.length, correctedTerm };
   } catch {
     return null; // timeout / network / parse → caller falls back
   }

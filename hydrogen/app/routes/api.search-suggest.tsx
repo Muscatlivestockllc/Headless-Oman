@@ -73,8 +73,10 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
   // ── Products: Fast Simon ranking → hydrate; fall back to native predictive search ──
   let products: any[] = [];
+  let correctedTerm: string | null = null;
   const fs = await fastSimonSearch(q, { limit: 6 });
   if (fs) {
+    correctedTerm = fs.correctedTerm ?? null;
     const d: any = await context.storefront.query(PRODUCTS_BY_ID_QUERY, {
       variables: { ids: fs.productIds, ...inCtx },
     });
@@ -106,7 +108,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   }
 
   return Response.json(
-    { products, pages, articles, collections },
+    { products, pages, articles, collections, correctedTerm },
     { headers: { "Cache-Control": "public, max-age=30" } },
   );
 }

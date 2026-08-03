@@ -81,7 +81,7 @@ const SEARCH_NODES_QUERY = `#graphql
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const q = url.searchParams.get("q")?.trim() ?? "";
-  if (!q) return { q, products: [] as ShopifyProduct[], total: 0 };
+  if (!q) return { q, products: [] as ShopifyProduct[], total: 0, correctedTerm: null as string | null };
 
   const language = detectLanguage(request);
   const inCtx = { language, country: "OM" as const };
@@ -102,7 +102,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
       .map((id) => byId.get(id))
       .filter(sellable)
       .map((node: any) => ({ node }));
-    if (products.length) return { q, products, total: fs.total };
+    if (products.length) return { q, products, total: fs.total, correctedTerm: fs.correctedTerm ?? null };
   }
 
   // 2) Fallback: native Shopify search (Fast Simon down, timed out, or no matches).
@@ -112,7 +112,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const products: ShopifyProduct[] = (data?.search?.nodes ?? [])
     .filter(sellable)
     .map((node: any) => ({ node }));
-  return { q, products, total: products.length };
+  return { q, products, total: products.length, correctedTerm: null as string | null };
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
@@ -120,7 +120,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 export default function Search() {
-  const { q, products, total } = useLoaderData<typeof loader>();
+  const { q, products, total, correctedTerm } = useLoaderData<typeof loader>();
   const t = useT();
 
   return (
@@ -140,6 +140,13 @@ export default function Search() {
           <SearchAutosuggest defaultQuery={q} />
         </div>
       </div>
+
+      {correctedTerm && correctedTerm.toLowerCase() !== q.toLowerCase() && (
+        <p className="mb-2 text-sm text-muted-foreground">
+          {t("search.showing_for")}{" "}
+          <span className="font-semibold text-crimson">&ldquo;{correctedTerm}&rdquo;</span>
+        </p>
+      )}
 
       {q && (
         <p className="mb-6 text-sm text-muted-foreground">
