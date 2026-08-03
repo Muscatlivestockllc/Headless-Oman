@@ -9,6 +9,7 @@ import { useT } from "~/i18n/strings";
 import { detectLanguage } from "~/lib/locale";
 import { fastSimonSearch } from "~/lib/fastsimon";
 import { isJunk, isRedirected } from "~/lib/searchFilters";
+import { useSearchLabels } from "~/lib/searchLabels";
 
 // Shared card fields, used by both native search and the Fast Simon hydration query.
 const SEARCH_PRODUCT_FRAGMENT = `#graphql
@@ -192,6 +193,7 @@ export default function Search() {
   const { q, products, total, correctedTerm, pages, articles, collections } = useLoaderData<typeof loader>();
   const t = useT();
   const lp = useLocalePath();
+  const L = useSearchLabels();
   const hasContent = pages.length + articles.length + collections.length > 0;
 
   return (
@@ -214,7 +216,7 @@ export default function Search() {
 
       {correctedTerm && correctedTerm.toLowerCase() !== q.toLowerCase() && (
         <p className="mb-2 text-sm text-muted-foreground">
-          {t("search.showing_for")}{" "}
+          {L.showingFor}{" "}
           <span className="font-semibold text-crimson">&ldquo;{correctedTerm}&rdquo;</span>
         </p>
       )}
@@ -250,7 +252,7 @@ export default function Search() {
         <div className="mt-10 grid gap-6 border-t border-border pt-8 sm:grid-cols-3">
           {collections.length > 0 && (
             <div>
-              <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("search.collections")}</h2>
+              <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{L.collections}</h2>
               <ul className="space-y-1.5">
                 {collections.map((c) => (
                   <li key={c.handle}>
@@ -262,7 +264,7 @@ export default function Search() {
           )}
           {pages.length > 0 && (
             <div>
-              <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("search.pages")}</h2>
+              <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{L.pages}</h2>
               <ul className="space-y-1.5">
                 {pages.map((p) => (
                   <li key={p.handle}>
@@ -274,7 +276,7 @@ export default function Search() {
           )}
           {articles.length > 0 && (
             <div>
-              <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("search.articles")}</h2>
+              <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{L.articles}</h2>
               <ul className="space-y-1.5">
                 {articles.map((a) => (
                   <li key={a.handle}>
