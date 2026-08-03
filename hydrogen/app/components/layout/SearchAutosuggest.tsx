@@ -4,28 +4,10 @@ import { useLocalePath } from "@/stores/localeStore";
 import { useT } from "@/i18n/strings";
 import { Search, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { storefrontApiRequest, shopifyImageUrl, formatPrice } from "@/lib/shopify";
+import { shopifyImageUrl, formatPrice } from "@/lib/shopify";
 
-// Shopify's predictiveSearch API — designed for typeahead, ranks by relevance
-const PREDICTIVE_QUERY = `
-  query PredictiveSearch($query: String!) {
-    predictiveSearch(query: $query, types: [PRODUCT], limit: 6) {
-      products {
-        id
-        title
-        handle
-        availableForSale
-        priceRange {
-          minVariantPrice { amount currencyCode }
-        }
-        compareAtPriceRange {
-          minVariantPrice { amount currencyCode }
-        }
-        images(first: 1) { edges { node { url altText } } }
-      }
-    }
-  }
-`;
+// Autosuggest is served by /api/search-suggest: products ranked by Fast Simon, plus pages,
+// blog articles and collections from the native Storefront predictiveSearch.
 
 interface PredictiveProduct {
   id: string;
@@ -35,6 +17,13 @@ interface PredictiveProduct {
   priceRange: { minVariantPrice: { amount: string; currencyCode: string } };
   compareAtPriceRange: { minVariantPrice: { amount: string; currencyCode: string } };
   images: { edges: Array<{ node: { url: string; altText: string | null } }> };
+}
+
+interface SuggestData {
+  products: PredictiveProduct[];
+  pages: Array<{ title: string; handle: string }>;
+  articles: Array<{ title: string; handle: string; blog?: { handle: string } | null }>;
+  collections: Array<{ title: string; handle: string }>;
 }
 
 interface Props {
@@ -71,10 +60,11 @@ export function SearchAutosuggest({
   }, []);
 
   const { data, isFetching } = useQuery({
-    queryKey: ["predictive-search", debounced],
-    queryFn: async () => {
-      const res = await storefrontApiRequest<any>(PREDICTIVE_QUERY, { query: debounced });
-      return (res?.data?.predictiveSearch?.products ?? []) as PredictiveProduct[];
+    queryKey: ["search-suggest", debounced],
+    queryFn: async (): Promise<SuggestData> => {
+      const res = await fetch(`/api/search-suggest?q=${encodeURIComponent(debounced)}`);
+      if (!res.ok) return { products: [], pages: [], articles: [], collections: [] };
+      return (await res.json()) as SuggestData;
     },
     enabled: debounced.length >= 2,
     staleTime: 1000 * 30,
@@ -87,9 +77,15 @@ export function SearchAutosuggest({
     navigate(`/search?q=${encodeURIComponent(value.trim())}`);
   };
 
-  const products = (data ?? []).filter(
-    (p: PredictiveProduct) => parseFloat(p.priceRange.minVariantPrice.amount) > 0
+  const close = () => { setOpen(false); onNavigate?.(); };
+
+  const products = (data?.products ?? []).filter(
+    (p) => parseFloat(p.priceRange.minVariantPrice.amount) > 0
   );
+  const pages = data?.pages ?? [];
+  const articles = data?.articles ?? [];
+  const collections = data?.collections ?? [];
+  const hasAny = products.length + pages.length + articles.length + collections.length > 0;
 
   return (
     <div ref={ref} className="relative w-full">
@@ -112,12 +108,13 @@ export function SearchAutosuggest({
 
       {open && debounced.length >= 2 && (
         <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[70vh] overflow-y-auto rounded-xl border border-border bg-popover shadow-xl">
-          {products.length === 0 && !isFetching ? (
+          {!hasAny && !isFetching ? (
             <div className="px-4 py-6 text-center text-sm text-muted-foreground">
               {t("search.no_matches")} &ldquo;{debounced}&rdquo;
             </div>
           ) : (
             <>
+              {products.length > 0 && (
               <ul className="divide-y divide-border">
                 {products.map((p) => {
                   const img = p.images.edges[0]?.node;
@@ -164,6 +161,38 @@ export function SearchAutosuggest({
                   );
                 })}
               </ul>
+              )}
+
+              {collections.length > 0 && (
+                <div className="border-t border-border py-2">
+                  <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t("search.collections")}</div>
+                  {collections.map((c) => (
+                    <Link key={c.handle} to={lp(`/collections/${c.handle}`)} onClick={close}
+                      className="block truncate px-4 py-2 text-sm hover:bg-muted">{c.title}</Link>
+                  ))}
+                </div>
+              )}
+
+              {pages.length > 0 && (
+                <div className="border-t border-border py-2">
+                  <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t("search.pages")}</div>
+                  {pages.map((p) => (
+                    <Link key={p.handle} to={lp(`/pages/${p.handle}`)} onClick={close}
+                      className="block truncate px-4 py-2 text-sm hover:bg-muted">{p.title}</Link>
+                  ))}
+                </div>
+              )}
+
+              {articles.length > 0 && (
+                <div className="border-t border-border py-2">
+                  <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t("search.articles")}</div>
+                  {articles.map((a) => (
+                    <Link key={a.handle} to={lp(`/blogs/${a.blog?.handle ?? "news"}/${a.handle}`)} onClick={close}
+                      className="block truncate px-4 py-2 text-sm hover:bg-muted">{a.title}</Link>
+                  ))}
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={() => submit(q)}

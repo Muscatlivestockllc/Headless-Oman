@@ -78,6 +78,7 @@ export default hydrogenRoutes([
   route('api/reviews/:handle', 'routes/api.reviews.$handle.tsx'),
   route('api/globo-options/:productId', 'routes/api.globo-options.$productId.tsx'),
   route('api/back-in-stock', 'routes/api.back-in-stock.tsx'),
+  route('api/search-suggest', 'routes/api.search-suggest.tsx'),
   route('api/newsletter-subscribe', 'routes/api.newsletter-subscribe.tsx'),
   route('api/discounts', 'routes/api.discounts.ts'),
   // Klaviyo Customer Hub login handshake for the headless storefront (per Klaviyo Support).
