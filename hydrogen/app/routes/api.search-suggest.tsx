@@ -1,6 +1,17 @@
 import type { LoaderFunctionArgs } from "@shopify/remix-oxygen";
 import { fastSimonSearch } from "~/lib/fastsimon";
 import { detectLanguage } from "~/lib/locale";
+import { REDIRECTS } from "~/lib/redirects";
+
+// Keep test/draft/duplicate content out of search. The Storefront API already excludes true drafts,
+// so this handles published-but-not-customer-facing items: "TEST ...", "... copy", and anything we
+// 301-redirect away as a duplicate (reusing the redirects map).
+const isJunk = (title?: string | null) => {
+  const s = (title ?? "").trim();
+  return !s || s.startsWith("[") || /\b(test|draft|copy|demo|dummy)\b/i.test(s);
+};
+const isRedirected = (kind: "pages" | "collections" | "products", handle?: string | null) =>
+  !!handle && !!REDIRECTS[`/${kind}/${handle}`];
 
 // Unified autosuggest source: products ranked by Fast Simon (hydrated through our Storefront API),
 // plus pages / blog articles / collections from the native Storefront predictiveSearch (Fast Simon
@@ -76,7 +87,9 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     });
     products = d?.predictiveSearch?.products ?? [];
   }
-  products = products.filter(sellable).slice(0, 6);
+  products = products
+    .filter((p) => sellable(p) && !isJunk(p?.title) && !isRedirected("products", p?.handle))
+    .slice(0, 6);
 
   // ── Pages / articles / collections: native ──
   let pages: any[] = [], articles: any[] = [], collections: any[] = [];
@@ -85,9 +98,9 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
       variables: { query: q, ...inCtx },
     });
     const ps = c?.predictiveSearch ?? {};
-    pages = ps.pages ?? [];
-    articles = ps.articles ?? [];
-    collections = ps.collections ?? [];
+    pages = (ps.pages ?? []).filter((p: any) => !isJunk(p?.title) && !isRedirected("pages", p?.handle));
+    articles = (ps.articles ?? []).filter((a: any) => !isJunk(a?.title));
+    collections = (ps.collections ?? []).filter((c: any) => !isJunk(c?.title) && !isRedirected("collections", c?.handle));
   } catch {
     /* content is best-effort; products still return */
   }

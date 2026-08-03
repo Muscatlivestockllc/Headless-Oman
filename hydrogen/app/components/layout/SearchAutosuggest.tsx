@@ -86,6 +86,29 @@ export function SearchAutosuggest({
   const articles = data?.articles ?? [];
   const collections = data?.collections ?? [];
   const hasAny = products.length + pages.length + articles.length + collections.length > 0;
+  const hasSuggestions = collections.length + pages.length + articles.length > 0;
+
+  // Compact grouped links for the right-hand suggestions rail (Collections / Pages / Articles).
+  const renderGroup = (
+    label: string,
+    items: Array<{ title: string; handle: string; blog?: { handle: string } | null }>,
+    toFn: (it: { handle: string; blog?: { handle: string } | null }) => string,
+  ) =>
+    items.length === 0 ? null : (
+      <div className="mb-2 last:mb-0">
+        <div className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
+        {items.slice(0, 3).map((it) => (
+          <Link
+            key={it.handle}
+            to={toFn(it)}
+            onClick={close}
+            className="block truncate rounded-md px-2 py-1.5 text-sm hover:bg-background"
+          >
+            {it.title}
+          </Link>
+        ))}
+      </div>
+    );
 
   return (
     <div ref={ref} className="relative w-full">
@@ -114,89 +137,75 @@ export function SearchAutosuggest({
             </div>
           ) : (
             <>
-              {products.length > 0 && (
-              <ul className="divide-y divide-border">
-                {products.map((p) => {
-                  const img = p.images.edges[0]?.node;
-                  const price = p.priceRange.minVariantPrice;
-                  const compareAt = p.compareAtPriceRange?.minVariantPrice;
-                  const hasDiscount =
-                    compareAt && parseFloat(compareAt.amount) > parseFloat(price.amount);
-                  return (
-                    <li key={p.id}>
-                      <Link
-                        to={lp(`/products/${p.handle}`)}
-                        onClick={() => { setOpen(false); onNavigate?.(); }}
-                        className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted"
-                      >
-                        <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-md bg-muted">
-                          {img && (
-                            <img
-                              src={shopifyImageUrl(img.url, 96)}
-                              alt={img.altText ?? p.title}
-                              className="h-full w-full object-cover"
-                            />
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium leading-snug">{p.title}</div>
-                          <div className="mt-0.5 flex items-center gap-2">
-                            <span className="text-xs font-bold text-crimson">
-                              {formatPrice(price.amount, price.currencyCode)}
-                            </span>
-                            {hasDiscount && (
-                              <span className="text-[11px] text-muted-foreground line-through">
-                                {formatPrice(compareAt.amount, compareAt.currencyCode)}
-                              </span>
-                            )}
-                            {!p.availableForSale && (
-                              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
-                                {t("search.out_of_stock")}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-              )}
+              <div className="flex flex-col sm:flex-row">
+                {products.length > 0 && (
+                  <ul className="flex-1 divide-y divide-border">
+                    {products.slice(0, 5).map((p) => {
+                      const img = p.images.edges[0]?.node;
+                      const price = p.priceRange.minVariantPrice;
+                      const compareAt = p.compareAtPriceRange?.minVariantPrice;
+                      const hasDiscount =
+                        compareAt && parseFloat(compareAt.amount) > parseFloat(price.amount);
+                      return (
+                        <li key={p.id}>
+                          <Link
+                            to={lp(`/products/${p.handle}`)}
+                            onClick={close}
+                            className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted"
+                          >
+                            <div className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+                              {img && (
+                                <img
+                                  src={shopifyImageUrl(img.url, 88)}
+                                  alt={img.altText ?? p.title}
+                                  className="h-full w-full object-cover"
+                                />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm font-medium leading-snug">{p.title}</div>
+                              <div className="mt-0.5 flex items-center gap-2">
+                                <span className="text-xs font-bold text-crimson">
+                                  {formatPrice(price.amount, price.currencyCode)}
+                                </span>
+                                {hasDiscount && (
+                                  <span className="text-[11px] text-muted-foreground line-through">
+                                    {formatPrice(compareAt.amount, compareAt.currencyCode)}
+                                  </span>
+                                )}
+                                {!p.availableForSale && (
+                                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                                    {t("search.out_of_stock")}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
 
-              {collections.length > 0 && (
-                <div className="border-t border-border py-2">
-                  <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t("search.collections")}</div>
-                  {collections.map((c) => (
-                    <Link key={c.handle} to={lp(`/collections/${c.handle}`)} onClick={close}
-                      className="block truncate px-4 py-2 text-sm hover:bg-muted">{c.title}</Link>
-                  ))}
-                </div>
-              )}
-
-              {pages.length > 0 && (
-                <div className="border-t border-border py-2">
-                  <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t("search.pages")}</div>
-                  {pages.map((p) => (
-                    <Link key={p.handle} to={lp(`/pages/${p.handle}`)} onClick={close}
-                      className="block truncate px-4 py-2 text-sm hover:bg-muted">{p.title}</Link>
-                  ))}
-                </div>
-              )}
-
-              {articles.length > 0 && (
-                <div className="border-t border-border py-2">
-                  <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t("search.articles")}</div>
-                  {articles.map((a) => (
-                    <Link key={a.handle} to={lp(`/blogs/${a.blog?.handle ?? "news"}/${a.handle}`)} onClick={close}
-                      className="block truncate px-4 py-2 text-sm hover:bg-muted">{a.title}</Link>
-                  ))}
-                </div>
-              )}
+                {hasSuggestions && (
+                  <div
+                    className={`${
+                      products.length > 0
+                        ? "border-t border-border sm:w-56 sm:border-l sm:border-t-0"
+                        : "flex-1"
+                    } bg-muted/30 p-2`}
+                  >
+                    {renderGroup(t("search.collections"), collections, (c) => lp(`/collections/${c.handle}`))}
+                    {renderGroup(t("search.pages"), pages, (p) => lp(`/pages/${p.handle}`))}
+                    {renderGroup(t("search.articles"), articles, (a) => lp(`/blogs/${a.blog?.handle ?? "news"}/${a.handle}`))}
+                  </div>
+                )}
+              </div>
 
               <button
                 type="button"
                 onClick={() => submit(q)}
-                className="block w-full border-t border-border bg-card px-4 py-3 text-center text-xs font-bold uppercase tracking-wider text-crimson transition-colors hover:bg-muted"
+                className="block w-full border-t border-border bg-card px-4 py-2.5 text-center text-xs font-bold uppercase tracking-wider text-crimson transition-colors hover:bg-muted"
               >
                 {t("search.see_all_for")} &ldquo;{debounced}&rdquo; →
               </button>
