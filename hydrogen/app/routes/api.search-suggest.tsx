@@ -1,17 +1,7 @@
 import type { LoaderFunctionArgs } from "@shopify/remix-oxygen";
 import { fastSimonSearch } from "~/lib/fastsimon";
 import { detectLanguage } from "~/lib/locale";
-import { REDIRECTS } from "~/lib/redirects";
-
-// Keep test/draft/duplicate content out of search. The Storefront API already excludes true drafts,
-// so this handles published-but-not-customer-facing items: "TEST ...", "... copy", and anything we
-// 301-redirect away as a duplicate (reusing the redirects map).
-const isJunk = (title?: string | null) => {
-  const s = (title ?? "").trim();
-  return !s || s.startsWith("[") || /\b(test|draft|copy|demo|dummy)\b/i.test(s);
-};
-const isRedirected = (kind: "pages" | "collections" | "products", handle?: string | null) =>
-  !!handle && !!REDIRECTS[`/${kind}/${handle}`];
+import { isJunk, isRedirected } from "~/lib/searchFilters";
 
 // Unified autosuggest source: products ranked by Fast Simon (hydrated through our Storefront API),
 // plus pages / blog articles / collections from the native Storefront predictiveSearch (Fast Simon

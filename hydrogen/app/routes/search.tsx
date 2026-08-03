@@ -7,6 +7,7 @@ import type { ShopifyProduct } from "~/lib/shopify";
 import { useT } from "~/i18n/strings";
 import { detectLanguage } from "~/lib/locale";
 import { fastSimonSearch } from "~/lib/fastsimon";
+import { isJunk, isRedirected } from "~/lib/searchFilters";
 
 // Shared card fields, used by both native search and the Fast Simon hydration query.
 const SEARCH_PRODUCT_FRAGMENT = `#graphql
@@ -78,6 +79,21 @@ const SEARCH_NODES_QUERY = `#graphql
   }
 ` as const;
 
+// Native predictiveSearch — true as-you-type PREFIX matching, so half-typed words like
+// "whole car" match "Whole Carcass" (Fast Simon's full-text endpoint only matches whole words).
+const SEARCH_PREDICTIVE_QUERY = `#graphql
+  ${SEARCH_PRODUCT_FRAGMENT}
+  query SearchPredictive(
+    $query: String!
+    $language: LanguageCode
+    $country: CountryCode
+  ) @inContext(language: $language, country: $country) {
+    predictiveSearch(query: $query, limit: 10, types: [PRODUCT]) {
+      products { ...SearchProduct }
+    }
+  }
+` as const;
+
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const q = url.searchParams.get("q")?.trim() ?? "";
@@ -85,34 +101,56 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
   const language = detectLanguage(request);
   const inCtx = { language, country: "OM" as const };
-  const sellable = (node: any) =>
-    node && parseFloat(node.priceRange?.minVariantPrice?.amount ?? "0") > 0;
+  const clean = (node: any) =>
+    node &&
+    parseFloat(node.priceRange?.minVariantPrice?.amount ?? "0") > 0 &&
+    !isJunk(node.title) &&
+    !isRedirected("products", node.handle);
 
-  // 1) Fast Simon relevance ranking → hydrate its product IDs through our Storefront API,
-  //    keeping Fast Simon's order (nodes() returns results in the same order as the ids).
+  // Fast Simon ranking (whole words) → hydrate full card data, order preserved.
+  let fsNodes: any[] = [];
+  let correctedTerm: string | null = null;
   const fs = await fastSimonSearch(q, { limit: 24 });
+  // Did Fast Simon drop a half-typed last word? (its matched term is a prefix of the query)
+  const truncated = !!(fs?.correctedTerm && q.toLowerCase().startsWith(fs.correctedTerm.toLowerCase() + " "));
   if (fs) {
     const data = await context.storefront.query(SEARCH_NODES_QUERY, {
       variables: { ids: fs.productIds, ...inCtx },
     });
-    const byId = new Map(
-      (data?.nodes ?? []).filter(Boolean).map((n: any) => [n.id, n]),
-    );
-    const products: ShopifyProduct[] = fs.productIds
-      .map((id) => byId.get(id))
-      .filter(sellable)
-      .map((node: any) => ({ node }));
-    if (products.length) return { q, products, total: fs.total, correctedTerm: fs.correctedTerm ?? null };
+    const byId = new Map((data?.nodes ?? []).filter(Boolean).map((n: any) => [n.id, n]));
+    fsNodes = fs.productIds.map((id) => byId.get(id)).filter(Boolean);
+    correctedTerm = truncated ? null : (fs.correctedTerm ?? null);
   }
 
-  // 2) Fallback: native Shopify search (Fast Simon down, timed out, or no matches).
-  const data = await context.storefront.query(SEARCH_QUERY, {
-    variables: { query: q, first: 24, ...inCtx },
+  // Native predictiveSearch — prefix matching so half-typed words match.
+  let nativeNodes: any[] = [];
+  try {
+    const data = await context.storefront.query(SEARCH_PREDICTIVE_QUERY, {
+      variables: { query: q, ...inCtx },
+    });
+    nativeNodes = data?.predictiveSearch?.products ?? [];
+  } catch {
+    /* prefix results are best-effort */
+  }
+
+  // Merge: partial-word truncation → native prefix matches lead; else Fast Simon's ranking leads.
+  const seen = new Set<string>();
+  let nodes = (truncated ? [...nativeNodes, ...fsNodes] : [...fsNodes, ...nativeNodes]).filter((n: any) => {
+    if (!n || seen.has(n.id)) return false;
+    seen.add(n.id);
+    return clean(n);
   });
-  const products: ShopifyProduct[] = (data?.search?.nodes ?? [])
-    .filter(sellable)
-    .map((node: any) => ({ node }));
-  return { q, products, total: products.length, correctedTerm: null as string | null };
+
+  // Final fallback: native full-text search if the hybrid found nothing.
+  if (!nodes.length) {
+    const data = await context.storefront.query(SEARCH_QUERY, {
+      variables: { query: q, first: 24, ...inCtx },
+    });
+    nodes = (data?.search?.nodes ?? []).filter(clean);
+  }
+
+  const products: ShopifyProduct[] = nodes.map((node: any) => ({ node }));
+  return { q, products, total: products.length, correctedTerm };
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
