@@ -45,6 +45,18 @@ const CONTENT_QUERY = `#graphql
   }
 ` as const;
 
+// Typo-tolerant fallback — Shopify's full-text search fixes misspellings ("beaf" → beef) far better
+// than Fast Simon (which returns nothing for those). Used only when nothing else matched.
+const PRODUCTS_TYPO_QUERY = `#graphql
+  ${PRODUCT_FIELDS}
+  query SuggestProductsTypo($query: String!, $language: LanguageCode, $country: CountryCode)
+  @inContext(language: $language, country: $country) {
+    search(query: $query, first: 6, types: [PRODUCT]) {
+      nodes { ... on Product { ...SuggestProduct } }
+    }
+  }
+` as const;
+
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const q = url.searchParams.get("q")?.trim() ?? "";
@@ -86,16 +98,35 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     /* content is best-effort; products still return */
   }
 
+  const clean = (p: any) => sellable(p) && !isJunk(p?.title) && !isRedirected("products", p?.handle);
+
   // Merge: when Fast Simon truncated a half-typed word, native prefix matches are the real intent →
   // lead with them; otherwise Fast Simon's ranking leads. Dedupe by id, drop junk, cap at 6.
   const seen = new Set<string>();
-  const products = (truncated ? [...nativeProducts, ...fsProducts] : [...fsProducts, ...nativeProducts])
+  let products = (truncated ? [...nativeProducts, ...fsProducts] : [...fsProducts, ...nativeProducts])
     .filter((p: any) => {
       if (!p || seen.has(p.id)) return false;
       seen.add(p.id);
-      return sellable(p) && !isJunk(p?.title) && !isRedirected("products", p?.handle);
+      return clean(p);
     })
     .slice(0, 6);
+
+  // Typo fallback: nothing matched (e.g. "beaf") → Shopify's native search corrects misspellings.
+  if (!products.length) {
+    try {
+      const d: any = await context.storefront.query(PRODUCTS_TYPO_QUERY, { variables: { query: q, ...inCtx } });
+      const seen2 = new Set<string>();
+      products = (d?.search?.nodes ?? [])
+        .filter((p: any) => {
+          if (!p || seen2.has(p.id)) return false;
+          seen2.add(p.id);
+          return clean(p);
+        })
+        .slice(0, 6);
+    } catch {
+      /* best-effort */
+    }
+  }
 
   return Response.json(
     { products, pages, articles, collections, correctedTerm },

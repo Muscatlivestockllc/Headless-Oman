@@ -45,11 +45,14 @@ export async function fastSimonSearch(
       .map((it) => it?.id)
       .filter((id) => id != null && String(id).length > 0)
       .map((id) => `gid://shopify/Product/${id}`);
-    if (!productIds.length) return null;
+    // total 0 means no real match — Fast Simon still returns unrelated "fallback" items in that
+    // case, so bail and let the caller use native (typo-tolerant) Shopify search instead.
+    const total = Number(json?.total_results) || 0;
+    if (!productIds.length || total === 0) return null;
     const resultsFor = typeof json?.results_for === "string" ? json.results_for.trim() : "";
     const correctedTerm =
       resultsFor && resultsFor.toLowerCase() !== q.toLowerCase() ? resultsFor : undefined;
-    return { productIds, total: Number(json?.total_results) || productIds.length, correctedTerm };
+    return { productIds, total, correctedTerm };
   } catch {
     return null; // timeout / network / parse → caller falls back
   }

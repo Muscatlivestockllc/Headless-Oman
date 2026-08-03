@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@shopify/remix-oxygen";
-import { useLoaderData } from "react-router";
+import { useLoaderData, Link } from "react-router";
+import { useLocalePath } from "~/stores/localeStore";
 import { ShopifySearchView } from "~/lib/shopifyAnalytics";
 import { SearchAutosuggest } from "~/components/layout/SearchAutosuggest";
 import { ProductCard } from "~/components/product/ProductCard";
@@ -94,10 +95,25 @@ const SEARCH_PREDICTIVE_QUERY = `#graphql
   }
 ` as const;
 
+// Pages / blog articles / collections for the results page (Fast Simon indexes products only).
+const SEARCH_CONTENT_QUERY = `#graphql
+  query SearchContent($query: String!, $language: LanguageCode, $country: CountryCode)
+  @inContext(language: $language, country: $country) {
+    predictiveSearch(query: $query, limit: 6, types: [PAGE, ARTICLE, COLLECTION]) {
+      pages { title handle }
+      articles { title handle blog { handle } }
+      collections { title handle }
+    }
+  }
+` as const;
+
+type Named = { title: string; handle: string; blog?: { handle: string } | null };
+const emptyContent = { pages: [] as Named[], articles: [] as Named[], collections: [] as Named[] };
+
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const q = url.searchParams.get("q")?.trim() ?? "";
-  if (!q) return { q, products: [] as ShopifyProduct[], total: 0, correctedTerm: null as string | null };
+  if (!q) return { q, products: [] as ShopifyProduct[], total: 0, correctedTerm: null as string | null, ...emptyContent };
 
   const language = detectLanguage(request);
   const inCtx = { language, country: "OM" as const };
@@ -150,7 +166,22 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   }
 
   const products: ShopifyProduct[] = nodes.map((node: any) => ({ node }));
-  return { q, products, total: products.length, correctedTerm };
+
+  // Pages / articles / collections (native predictiveSearch — Fast Simon indexes products only).
+  let pages: Named[] = [], articles: Named[] = [], collections: Named[] = [];
+  try {
+    const cd: any = await context.storefront.query(SEARCH_CONTENT_QUERY, {
+      variables: { query: q, ...inCtx },
+    });
+    const ps = cd?.predictiveSearch ?? {};
+    pages = (ps.pages ?? []).filter((p: any) => !isJunk(p?.title) && !isRedirected("pages", p?.handle));
+    articles = (ps.articles ?? []).filter((a: any) => !isJunk(a?.title));
+    collections = (ps.collections ?? []).filter((c: any) => !isJunk(c?.title) && !isRedirected("collections", c?.handle));
+  } catch {
+    /* content is best-effort */
+  }
+
+  return { q, products, total: products.length, correctedTerm, pages, articles, collections };
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
@@ -158,8 +189,10 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 export default function Search() {
-  const { q, products, total, correctedTerm } = useLoaderData<typeof loader>();
+  const { q, products, total, correctedTerm, pages, articles, collections } = useLoaderData<typeof loader>();
   const t = useT();
+  const lp = useLocalePath();
+  const hasContent = pages.length + articles.length + collections.length > 0;
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -200,16 +233,57 @@ export default function Search() {
             <ProductCard key={product.node.id} product={product} />
           ))}
         </div>
-      ) : q ? (
+      ) : q && !hasContent ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <p className="text-lg font-semibold">{t("search.no_results_for")} &ldquo;{q}&rdquo;</p>
           <p className="mt-2 text-sm text-muted-foreground">
             {t("search.try_different")}
           </p>
         </div>
-      ) : (
+      ) : !q ? (
         <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground">
           <p>{t("search.type_something")}</p>
+        </div>
+      ) : null}
+
+      {hasContent && (
+        <div className="mt-10 grid gap-6 border-t border-border pt-8 sm:grid-cols-3">
+          {collections.length > 0 && (
+            <div>
+              <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("search.collections")}</h2>
+              <ul className="space-y-1.5">
+                {collections.map((c) => (
+                  <li key={c.handle}>
+                    <Link to={lp(`/collections/${c.handle}`)} className="text-sm hover:text-crimson hover:underline">{c.title}</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {pages.length > 0 && (
+            <div>
+              <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("search.pages")}</h2>
+              <ul className="space-y-1.5">
+                {pages.map((p) => (
+                  <li key={p.handle}>
+                    <Link to={lp(`/pages/${p.handle}`)} className="text-sm hover:text-crimson hover:underline">{p.title}</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {articles.length > 0 && (
+            <div>
+              <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("search.articles")}</h2>
+              <ul className="space-y-1.5">
+                {articles.map((a) => (
+                  <li key={a.handle}>
+                    <Link to={lp(`/blogs/${a.blog?.handle ?? "news"}/${a.handle}`)} className="text-sm hover:text-crimson hover:underline">{a.title}</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
     </main>
