@@ -12,7 +12,6 @@ import { shopifyImageUrl, formatPrice } from "@/lib/shopify";
 
 const RECENT_KEY = "mls_recent_searches";
 const RECENT_MAX = 6;
-const POPULAR_SEARCHES = ["Wagyu", "Angus Beef", "Burgers", "Lamb Carcass", "Mishkak", "Ribeye", "Chicken"];
 
 function loadRecent(): string[] {
   try {
@@ -56,6 +55,8 @@ export function SearchAutosuggest({
   const lp = useLocalePath();
   const t = useT();
   const resolvedPlaceholder = placeholder ?? t("search.placeholder");
+  // Popular searches are localized (EN/AR) via i18n — edit "search.popular_terms" in strings.ts.
+  const popularTerms = t("search.popular_terms").split("|").map((s) => s.trim()).filter(Boolean);
   const [q, setQ] = useState(defaultQuery);
   const [debounced, setDebounced] = useState("");
   const [open, setOpen] = useState(false);
@@ -204,7 +205,7 @@ export function SearchAutosuggest({
                   <TrendingUp className="h-3 w-3" /> {t("search.popular")}
                 </div>
                 <div className="flex flex-wrap gap-1.5 px-2 pb-1 pt-0.5">
-                  {POPULAR_SEARCHES.map((term) => (
+                  {popularTerms.map((term) => (
                     <button
                       key={term}
                       type="button"
