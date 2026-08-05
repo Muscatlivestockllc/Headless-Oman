@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { HScroller } from "./HScroller";
 import { useLocalePath } from "@/stores/localeStore";
+import { useT } from "@/i18n/strings";
 import { shopifyImageUrl } from "@/lib/shopify";
 import type { CutsSectionData } from "~/routes/_index";
 
@@ -9,7 +10,18 @@ interface Props {
 }
 
 export function ShopByCuts({ section }: Props) {
+  const t = useT();
   if (!section || section.items.length === 0) return null;
+
+  // The mls_cuts_section metaobject has no heading/eyebrow field, so the loader falls back to
+  // hardcoded English ("Shop by Cuts" / "Butcher's Picks") which never translate. When the section
+  // provides no translated heading, use the i18n string so Arabic renders correctly.
+  const heading = section.heading && section.heading !== "Shop by Cuts"
+    ? section.heading
+    : t("collection.shop_cuts");
+  const eyebrow = section.eyebrow && section.eyebrow !== "Butcher's Picks"
+    ? section.eyebrow
+    : t("collection.butchers_picks");
 
   return (
     <section className="py-3 md:py-6">
@@ -19,12 +31,12 @@ export function ShopByCuts({ section }: Props) {
           <div className="mb-1.5 flex items-center justify-center gap-3">
             <span className="h-px w-6 rounded-full bg-gradient-brand" />
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-crimson">
-              {section.eyebrow}
+              {eyebrow}
             </span>
             <span className="h-px w-6 rounded-full bg-gradient-brand" />
           </div>
           <h2 className="font-display text-2xl font-bold leading-snug tracking-tight md:text-3xl">
-            {section.heading}
+            {heading}
           </h2>
         </div>
 

@@ -717,7 +717,9 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const valueBanner = parseValueBanner(data?.valueBanner?.nodes ?? []);
   const cutsSection = parseCutsSection(data?.cutsSection?.nodes ?? []);
   const reelsConfig = parseReelsSectionConfig(data?.reelsSection?.nodes ?? []);
-  const saleSection = parseSaleSection(saleSecRes?.nodes ?? []);
+  // Prefer the Storefront sale section (carries Translate & Adapt Arabic now that the type has
+  // Storefront access). Fall back to Admin only when Storefront returns nothing.
+  const saleSection = parseSaleSection((sfMetaRes?.saleSection?.nodes?.length ? sfMetaRes.saleSection : saleSecRes)?.nodes ?? []);
 
   let saleProducts: ShopifyProduct[] = [];
   if (saleSection) {
