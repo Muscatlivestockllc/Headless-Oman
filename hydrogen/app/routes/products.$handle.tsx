@@ -553,7 +553,7 @@ function renderTemplate(suffix: string | null | undefined, props: any) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const product = data?.product;
   // Use Shopify SEO fields first (set in Admin → product → Search engine listing)
   const title = product?.seo?.title?.trim()
@@ -562,7 +562,13 @@ export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
     || product?.description
     || "Premium halal meat delivered across Oman.").slice(0, 160);
   const image = product?.images?.edges?.[0]?.node?.url ?? product?.images?.nodes?.[0]?.url;
-  const canonical = `https://mls.om${location.pathname}`;
+  // Canonical is always the single English standalone product URL — built from the product
+  // handle only, NEVER from the request path. This keeps it stable regardless of which route
+  // rendered the page (a collection-nested /collections/x/products/y path or the /ar/products/…
+  // Arabic path would otherwise self-reference and create duplicate-content canonicals).
+  // canonicalHandle is the Admin/English handle, so Arabic pages canonicalize to the EN URL.
+  const canonicalHandle = data?.canonicalHandle ?? product?.handle ?? "";
+  const canonical = `https://mls.om/products/${canonicalHandle}`;
 
   const variants = product?.variants?.nodes ?? product?.variants?.edges?.map((e: any) => e.node) ?? [];
   const firstVariant = variants[0];
